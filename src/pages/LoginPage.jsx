@@ -190,7 +190,7 @@ const LoginPage = () => {
           <div className="flex items-center justify-center gap-2 flex-wrap">
             {backendOnline === true ? (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                Backend Online (8080)
+                Backend Online
               </span>
             ) : backendOnline === false ? (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
@@ -227,7 +227,7 @@ const LoginPage = () => {
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="font-semibold">Backend Offline:</strong> Spring Boot server is not running on port 8080.
+                  <strong className="font-semibold">Backend Offline:</strong> Spring Boot API server is not connected or waking up.
                 </div>
               </div>
               <button
