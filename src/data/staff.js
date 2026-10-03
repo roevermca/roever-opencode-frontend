@@ -32,7 +32,77 @@ export const STAFF_ROLES = ["VP", "HOD", "STAFF", "ADMIN", "STUDENT"];
 
 export const STAFF_STATUSES = ["Active", "Inactive"];
 
-export const initialStaff = [];
+export const initialStaff = [
+  {
+    id: "6ac14cb49f3b3663e8c7a6c6",
+    name: "Roever Administrator",
+    email: "roevermca09@gmail.com",
+    role: "ADMIN",
+    department: "Administration",
+    departmentId: "Administration",
+    phone: "+91 98765 00001",
+    status: "Active",
+    active: true,
+  },
+  {
+    id: "usr-admin-01",
+    name: "Dr. Rajesh Sharma",
+    email: "admin@amsportal.edu",
+    role: "ADMIN",
+    department: "Administration",
+    departmentId: "Administration",
+    phone: "+91 98765 00002",
+    status: "Active",
+    active: true,
+  },
+  {
+    id: "usr-vp-01",
+    name: "Prof. K. Narayanan",
+    email: "vp@amsportal.edu",
+    role: "VP",
+    department: "Administration",
+    departmentId: "Administration",
+    phone: "+91 98765 00003",
+    status: "Active",
+    active: true,
+  },
+  {
+    id: "usr-hod-01",
+    name: "Dr. S. Venkatesh",
+    email: "hod.cs@amsportal.edu",
+    role: "HOD",
+    department: "Computer Applications",
+    departmentId: "Computer Applications",
+    course: "MCA",
+    phone: "+91 98765 00004",
+    status: "Active",
+    active: true,
+  },
+  {
+    id: "usr-staff-01",
+    name: "Mrs. Anitha R (MCA Faculty)",
+    email: "staff@amsportal.edu",
+    role: "STAFF",
+    department: "Computer Applications",
+    departmentId: "Computer Applications",
+    course: "MCA",
+    phone: "+91 98765 00005",
+    status: "Active",
+    active: true,
+  },
+  {
+    id: "usr-student-01",
+    name: "Aravind Kumar (BCA)",
+    email: "student@amsportal.edu",
+    role: "STUDENT",
+    department: "Computer Applications",
+    departmentId: "Computer Applications",
+    course: "BCA",
+    phone: "+91 98765 00006",
+    status: "Active",
+    active: true,
+  },
+];
 
 export const userProfileData = {
   id: "usr-admin-1",

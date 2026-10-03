@@ -35,16 +35,21 @@ const TopNavbar = ({ onDrawerToggle }) => {
           className="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 transition-colors group"
           title="View Profile"
         >
-          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center border border-blue-200">
+          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center border border-blue-200 shrink-0">
             {user?.displayName ? user.displayName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
           </div>
-          <div className="hidden md:flex flex-col text-left">
-            <span className="text-sm font-semibold text-slate-800 group-hover:text-blue-600 leading-tight transition-colors">
-              {user?.displayName || "Admin User"}
+          <div className="hidden sm:flex flex-col text-left">
+            <span className="text-sm font-bold text-slate-800 group-hover:text-blue-600 leading-tight transition-colors">
+              {user?.displayName || user?.name || "Admin User"}
             </span>
-            <span className="text-xs text-slate-500 font-medium leading-tight uppercase">
-              {user?.role || "ADMIN"}
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs text-slate-600 font-medium leading-tight">
+                {user?.email || "roevermca09@gmail.com"}
+              </span>
+              <span className="text-[10px] font-bold text-blue-700 uppercase px-1.5 py-0.2 rounded bg-blue-100/70 border border-blue-200">
+                {user?.role || "ADMIN"}
+              </span>
+            </div>
           </div>
         </Link>
       </div>

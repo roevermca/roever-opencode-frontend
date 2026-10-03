@@ -90,8 +90,23 @@ const SidebarNav = ({ onItemClick }) => {
         })}
       </nav>
 
-      {/* Footer Sign Out */}
+      {/* Footer User Info & Sign Out */}
       <div className="pt-3 mt-auto border-t border-slate-200">
+        {user && (
+          <div className="mb-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center border border-blue-200 shrink-0">
+              {user.displayName ? user.displayName.charAt(0).toUpperCase() : "A"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 truncate">
+                {user.displayName || user.name || "Administrator"}
+              </p>
+              <p className="text-[11px] text-slate-500 truncate" title={user.email}>
+                {user.email}
+              </p>
+            </div>
+          </div>
+        )}
         <button
           type="button"
           onClick={handleLogout}

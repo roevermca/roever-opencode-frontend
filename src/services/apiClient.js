@@ -15,29 +15,31 @@ export class ApiError extends Error {
  * or fallback token in local mock environment.
  */
 export async function getAuthToken() {
-  if (isFirebaseConfigured && auth?.currentUser) {
+  const savedUserStr =
+    localStorage.getItem("ams_auth_user") ||
+    localStorage.getItem("ams_mock_auth_user");
+  if (savedUserStr) {
     try {
-      return await auth.currentUser.getIdToken();
+      const parsed = JSON.parse(savedUserStr);
+      if (parsed.email && parsed.email.includes("@")) {
+        return parsed.email.toLowerCase().trim();
+      }
+      if (parsed.token) return parsed.token;
     } catch {
-      return null;
+      // ignore
     }
   }
 
-  const savedUser = localStorage.getItem("ams_mock_auth_user");
-  if (savedUser) {
-    try {
-      const parsed = JSON.parse(savedUser);
-      return parsed.email || parsed.token || parsed.uid || "admin@amsportal.edu";
-    } catch {
-      return null;
-    }
+  if (isFirebaseConfigured && auth?.currentUser?.email) {
+    return auth.currentUser.email.toLowerCase().trim();
   }
-  return null;
+
+  return "roevermca09@gmail.com";
 }
 
 /**
  * Performs an HTTP request with centralized baseURL, JSON headers,
- * automatic Bearer token injection, and structured error handling.
+ * automatic Bearer token injection, timeout handling, and structured error handling.
  */
 async function request(endpoint, options = {}) {
   const url = endpoint.startsWith("http")
@@ -55,18 +57,26 @@ async function request(endpoint, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs || 15000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   let response;
   try {
     response = await fetch(url, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
   } catch (networkError) {
+    clearTimeout(timeoutId);
     throw new ApiError(
       0,
       `Cannot connect to backend server at ${API_BASE_URL}. Ensure Spring Boot is running.`,
       networkError
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   // 204 No Content

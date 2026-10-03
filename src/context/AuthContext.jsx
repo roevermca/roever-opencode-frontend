@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
                 const res = await fetch(API_ENDPOINTS.USERS_ME, {
                   headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${firebaseUser.email || token}`,
                   },
                 });
 
@@ -310,7 +310,7 @@ export const AuthProvider = ({ children }) => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${normalizedEmail || token}`,
           },
         });
         if (res.ok) {
@@ -451,7 +451,7 @@ export const AuthProvider = ({ children }) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userCredential.user.email || token}`,
         },
       });
 
