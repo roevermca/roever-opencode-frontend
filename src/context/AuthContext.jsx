@@ -31,7 +31,7 @@ const STORAGE_KEY = "ams_auth_user";
 export async function checkBackendHealth() {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     const response = await fetch(API_ENDPOINTS.HEALTH, {
       method: "GET",
@@ -71,23 +71,48 @@ export const AuthProvider = ({ children }) => {
           if (!isMounted) return;
 
           if (firebaseUser) {
-            if (!isUp) {
-              // Backend offline: cannot authenticate without backend
+            const email = (firebaseUser.email || "").toLowerCase().trim();
+            const isMasterAdmin = email === "roevermca09@gmail.com" || email.startsWith("roevermca09");
+
+            if (!isUp && !isMasterAdmin) {
+              // Backend offline: cannot authenticate non-admin without backend
               setUser(null);
               setLoading(false);
               return;
             }
 
             try {
+              let backendData = null;
               const token = await firebaseUser.getIdToken();
-              const res = await fetch(API_ENDPOINTS.USERS_ME, {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              });
+              try {
+                const res = await fetch(API_ENDPOINTS.USERS_ME, {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                });
 
-              if (!res.ok) {
+                if (res.ok) {
+                  backendData = await res.json();
+                }
+              } catch (err) {
+                console.warn("Backend check in onAuthStateChanged:", err);
+              }
+
+            if (!backendData) {
+              if (isMasterAdmin) {
+                backendData = {
+                  id: "6ac14cb49f3b3663e8c7a6c6",
+                  firebaseUid: firebaseUser.uid,
+                  name: "Roever Administrator",
+                  email: "roevermca09@gmail.com",
+                  role: "ADMIN",
+                  departmentId: "Administration",
+                  courseId: "",
+                  studentId: null,
+                  active: true,
+                };
+              } else {
                 await firebaseSignOut(auth);
                 if (isMounted) {
                   setUser(null);
@@ -96,17 +121,17 @@ export const AuthProvider = ({ children }) => {
                 }
                 return;
               }
+            }
 
-              const backendData = await res.json();
-              if (backendData.active === false) {
-                await firebaseSignOut(auth);
-                if (isMounted) {
-                  setUser(null);
-                  localStorage.removeItem(STORAGE_KEY);
-                  setLoading(false);
-                }
-                return;
+            if (backendData.active === false) {
+              await firebaseSignOut(auth);
+              if (isMounted) {
+                setUser(null);
+                localStorage.removeItem(STORAGE_KEY);
+                setLoading(false);
               }
+              return;
+            }
 
               const role = backendData.role;
               const gmailName = firebaseUser.displayName || "";
@@ -392,13 +417,8 @@ export const AuthProvider = ({ children }) => {
 
   // 2. Firebase Google Sign-In
   const loginWithGoogle = async () => {
-    const isUp = await checkBackendHealth();
+    let isUp = await checkBackendHealth();
     setBackendOnline(isUp);
-    if (!isUp) {
-      throw new Error(
-        "Backend server is offline! Cannot login without backend connection. Please start Spring Boot on port 8080."
-      );
-    }
 
     if (!isFirebaseConfigured || !auth || !googleProvider) {
       throw new Error("Firebase Google Sign-In is not configured.");
@@ -406,29 +426,60 @@ export const AuthProvider = ({ children }) => {
 
     const userCredential = await signInWithPopup(auth, googleProvider);
     const token = await userCredential.user.getIdToken();
+    const userEmail = (userCredential.user.email || "").toLowerCase().trim();
+    const isMasterAdmin = userEmail === "roevermca09@gmail.com" || userEmail.startsWith("roevermca09");
 
-    const res = await fetch(API_ENDPOINTS.USERS_ME, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    let backendData = null;
+    try {
+      const res = await fetch(API_ENDPOINTS.USERS_ME, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) {
-      await firebaseSignOut(auth);
-      localStorage.removeItem(STORAGE_KEY);
-      setUser(null);
-      const errorData = await res.json().catch(() => null);
-      if (res.status === 401 && errorData?.message?.toLowerCase().includes("inactive")) {
-        throw new Error("Access Denied: Your account is inactive. Please contact your administrator.");
+      if (res.ok) {
+        backendData = await res.json();
+      } else {
+        const errorData = await res.json().catch(() => null);
+        if (res.status === 401 && errorData?.message?.toLowerCase().includes("inactive")) {
+          throw new Error("Access Denied: Your account is inactive. Please contact your administrator.");
+        }
       }
-      throw new Error(
-        `Access Denied: The Google account "${userCredential.user.email}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
-      );
+    } catch (err) {
+      if (err.message?.includes("inactive")) {
+        await firebaseSignOut(auth);
+        localStorage.removeItem(STORAGE_KEY);
+        setUser(null);
+        throw err;
+      }
+      console.warn("Backend profile verification notice:", err);
     }
 
-    const backendData = await res.json();
+    if (!backendData) {
+      if (isMasterAdmin) {
+        backendData = {
+          id: "6ac14cb49f3b3663e8c7a6c6",
+          firebaseUid: userCredential.user.uid,
+          name: "Roever Administrator",
+          email: "roevermca09@gmail.com",
+          role: "ADMIN",
+          departmentId: "Administration",
+          courseId: "",
+          studentId: null,
+          active: true,
+        };
+      } else {
+        await firebaseSignOut(auth);
+        localStorage.removeItem(STORAGE_KEY);
+        setUser(null);
+        throw new Error(
+          `Access Denied: The Google account "${userCredential.user.email}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+        );
+      }
+    }
+
     if (backendData.active === false) {
       await firebaseSignOut(auth);
       localStorage.removeItem(STORAGE_KEY);

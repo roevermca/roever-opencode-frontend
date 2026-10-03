@@ -3,13 +3,24 @@ const isLocalhost =
   (window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1");
 
+const getCustomApiUrl = () => {
+  if (typeof window !== "undefined") {
+    const custom = localStorage.getItem("roever_api_url");
+    if (custom && custom.trim()) {
+      return custom.trim().replace(/\/+$/, "");
+    }
+  }
+  return null;
+};
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL &&
+  getCustomApiUrl() ||
+  (import.meta.env.VITE_API_BASE_URL &&
   !import.meta.env.VITE_API_BASE_URL.includes("localhost")
     ? import.meta.env.VITE_API_BASE_URL
     : isLocalhost
     ? "http://localhost:8080/api"
-    : "https://roever-opencode-backend.onrender.com/api";
+    : "https://roever-opencode-backend-g3wy.onrender.com/api");
 
 export const API_ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,

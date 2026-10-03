@@ -256,7 +256,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={handleGoogleLogin}
-                disabled={isSubmitting || isGoogleSubmitting || backendOnline === false}
+                disabled={isSubmitting || isGoogleSubmitting}
                 className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isGoogleSubmitting ? (
@@ -402,7 +402,7 @@ const LoginPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || isGoogleSubmitting || backendOnline === false}
+              disabled={isSubmitting || isGoogleSubmitting}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
