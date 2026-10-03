@@ -1,5 +1,15 @@
+const isLocalhost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+  import.meta.env.VITE_API_BASE_URL &&
+  !import.meta.env.VITE_API_BASE_URL.includes("localhost")
+    ? import.meta.env.VITE_API_BASE_URL
+    : isLocalhost
+    ? "http://localhost:8080/api"
+    : "https://roever-opencode-backend.onrender.com/api";
 
 export const API_ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,
