@@ -9,7 +9,7 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1039632518495",
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1039632518495:web:e9a2a16086d188e2c77aea",
 };
-
+//selvi
 // Determines if valid Firebase configuration credentials have been supplied
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
