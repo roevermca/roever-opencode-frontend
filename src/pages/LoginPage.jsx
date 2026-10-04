@@ -160,9 +160,11 @@ const LoginPage = () => {
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white inline-flex items-center justify-center shadow-lg shadow-blue-500/20 mb-3">
-            <GraduationCap className="w-9 h-9 stroke-[2.2]" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Roever AMS Logo"
+            className="w-20 h-20 mx-auto object-contain drop-shadow-md mb-3 rounded-2xl"
+          />
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-1">
             Roever AMS
           </h1>

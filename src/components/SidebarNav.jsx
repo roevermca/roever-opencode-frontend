@@ -52,9 +52,11 @@ const SidebarNav = ({ onItemClick }) => {
     <div className="flex flex-col h-full bg-white p-4">
       {/* Brand Header */}
       <div className="flex items-center gap-3 p-2 mb-4 border-b border-slate-200">
-        <div className="p-2 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md">
-          <CheckSquare size={22} strokeWidth={2.5} />
-        </div>
+        <img
+          src="/logo.png"
+          alt="Roever AMS Logo"
+          className="w-10 h-10 object-contain rounded-xl shadow-xs"
+        />
         <div>
           <h2 className="text-base font-extrabold text-slate-900 leading-none">
             Roever AMS
