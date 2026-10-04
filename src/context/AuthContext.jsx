@@ -74,23 +74,7 @@ function resolveFallbackUser(email, uid, displayName) {
     };
   }
 
-  const isAdmin = norm.includes("admin") || norm.includes("roever") || norm.includes("yuvan");
-  const isVp = norm.includes("vp");
-  const isHod = norm.includes("hod");
-  const isStudent = norm.includes("student");
-  const resolvedRole = isAdmin ? "ADMIN" : isVp ? "VP" : isHod ? "HOD" : isStudent ? "STUDENT" : "ADMIN";
-
-  return {
-    id: `usr-${Date.now()}`,
-    firebaseUid: uid || `usr-${Date.now()}`,
-    email: norm,
-    name: displayName || norm.split("@")[0],
-    role: resolvedRole,
-    departmentId: "Administration",
-    courseId: "",
-    studentId: null,
-    active: true,
-  };
+  return null;
 }
 
 export const AuthProvider = ({ children }) => {
@@ -154,15 +138,26 @@ export const AuthProvider = ({ children }) => {
                 backendData = resolveFallbackUser(firebaseUser.email, firebaseUser.uid, firebaseUser.displayName);
               }
 
-            if (backendData.active === false) {
-              await firebaseSignOut(auth);
-              if (isMounted) {
-                setUser(null);
-                localStorage.removeItem(STORAGE_KEY);
-                setLoading(false);
+              if (!backendData) {
+                console.warn(`User ${firebaseUser.email} is not registered in the system.`);
+                await firebaseSignOut(auth);
+                if (isMounted) {
+                  setUser(null);
+                  localStorage.removeItem(STORAGE_KEY);
+                  setLoading(false);
+                }
+                return;
               }
-              return;
-            }
+
+              if (backendData.active === false) {
+                await firebaseSignOut(auth);
+                if (isMounted) {
+                  setUser(null);
+                  localStorage.removeItem(STORAGE_KEY);
+                  setLoading(false);
+                }
+                return;
+              }
 
               const role = backendData.role;
               const gmailName = firebaseUser.displayName || "";
@@ -349,6 +344,16 @@ export const AuthProvider = ({ children }) => {
       if (!backendData) {
         backendData = resolveFallbackUser(normalizedEmail, userCredential.user.uid, userCredential.user.displayName);
       }
+
+      if (!backendData) {
+        await firebaseSignOut(auth);
+        localStorage.removeItem(STORAGE_KEY);
+        setUser(null);
+        throw new Error(
+          `Access Denied: The account "${normalizedEmail}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+        );
+      }
+
       if (backendData.active === false) {
         await firebaseSignOut(auth);
         localStorage.removeItem(STORAGE_KEY);
@@ -416,6 +421,14 @@ export const AuthProvider = ({ children }) => {
 
       if (!backendData) {
         backendData = resolveFallbackUser(normalizedEmail, `usr-${Date.now()}`, normalizedEmail.split("@")[0]);
+      }
+
+      if (!backendData) {
+        localStorage.removeItem(STORAGE_KEY);
+        setUser(null);
+        throw new Error(
+          `Access Denied: The account "${normalizedEmail}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+        );
       }
 
       if (backendData.active === false) {
@@ -490,6 +503,15 @@ export const AuthProvider = ({ children }) => {
 
     if (!backendData) {
       backendData = resolveFallbackUser(userCredential.user.email, userCredential.user.uid, userCredential.user.displayName);
+    }
+
+    if (!backendData) {
+      await firebaseSignOut(auth);
+      localStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+      throw new Error(
+        `Access Denied: The Google account "${userCredential.user.email}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+      );
     }
 
     if (backendData.active === false) {
