@@ -12,21 +12,12 @@ import {
   ArrowRight,
   KeyRound,
   ShieldCheck,
-  Sparkles,
   X,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { getDashboardPath } from "../data/roles";
 import Modal from "../components/Modal";
-
-const DEMO_ACCOUNTS = [
-  { role: "ADMIN", email: "admin@amsportal.edu", password: "password123", label: "Admin" },
-  { role: "VP", email: "vp@amsportal.edu", password: "password123", label: "VP" },
-  { role: "HOD", email: "hod.cs@amsportal.edu", password: "password123", label: "HOD" },
-  { role: "STAFF", email: "staff@amsportal.edu", password: "password123", label: "Staff" },
-  { role: "STUDENT", email: "student@amsportal.edu", password: "password123", label: "Student" },
-];
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -84,7 +75,7 @@ const LoginPage = () => {
     if (!trimmedEmail) {
       errors.email = "Please enter your email address";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      errors.email = "Please enter a valid email address (e.g. name@amsportal.edu)";
+      errors.email = "Please enter a valid email address";
     }
 
     if (!password) {
@@ -162,13 +153,6 @@ const LoginPage = () => {
     setForgotError("");
     setForgotSuccess("");
     setShowForgotModal(true);
-  };
-
-  const fillDemoCredentials = (account) => {
-    setEmail(account.email);
-    setPassword(account.password);
-    setValidationErrors({});
-    setAuthError("");
   };
 
   return (
@@ -314,7 +298,7 @@ const LoginPage = () => {
                 </div>
                 <input
                   type="email"
-                  placeholder="name@amsportal.edu or your Gmail"
+                  placeholder="Enter your email address"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -418,32 +402,6 @@ const LoginPage = () => {
               )}
             </button>
           </form>
-
-          {/* Quick Test Demo Credentials */}
-          <div className="mt-6 pt-5 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Quick Test Accounts:</span>
-              </div>
-              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                1-Click Autofill
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.role}
-                  type="button"
-                  onClick={() => fillDemoCredentials(acc)}
-                  disabled={isSubmitting || isGoogleSubmitting}
-                  className="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors"
-                >
-                  {acc.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
