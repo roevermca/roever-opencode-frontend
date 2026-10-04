@@ -9,6 +9,7 @@ import {
   browserLocalPersistence,
   browserSessionPersistence,
   onAuthStateChanged,
+  deleteUser,
 } from "firebase/auth";
 import { auth, googleProvider, isFirebaseConfigured } from "../config/firebase";
 import { API_ENDPOINTS } from "../config/api";
@@ -139,8 +140,13 @@ export const AuthProvider = ({ children }) => {
               }
 
               if (!backendData) {
-                console.warn(`User ${firebaseUser.email} is not registered in the system.`);
-                await firebaseSignOut(auth);
+                console.warn(`User ${firebaseUser.email} is not registered in the system database. Removing from Firebase.`);
+                try {
+                  await deleteUser(firebaseUser);
+                } catch (delErr) {
+                  console.warn("Could not delete unregistered Firebase user:", delErr);
+                  await firebaseSignOut(auth);
+                }
                 if (isMounted) {
                   setUser(null);
                   localStorage.removeItem(STORAGE_KEY);
@@ -290,8 +296,9 @@ export const AuthProvider = ({ children }) => {
       try {
         userCredential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
       } catch (signInErr) {
-        // If user is not yet created in this Firebase project (e.g. seed account or newly added staff/student)
-        if (signInErr.code === "auth/user-not-found" || signInErr.code === "auth/invalid-credential") {
+        // ONLY allow seed accounts to bootstrap in Firebase if not yet created in this Firebase project
+        const isSeedAccount = Boolean(INSTITUTIONAL_SEED_MAP[normalizedEmail]);
+        if (isSeedAccount && (signInErr.code === "auth/user-not-found" || signInErr.code === "auth/invalid-credential")) {
           try {
             userCredential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
           } catch (createErr) {
@@ -300,6 +307,8 @@ export const AuthProvider = ({ children }) => {
             }
             throw new Error("Invalid email or password. Please check your credentials.");
           }
+        } else if (signInErr.code === "auth/user-not-found" || signInErr.code === "auth/invalid-credential") {
+          throw new Error("Access Denied: Account is not registered in Roever AMS database. Please contact Administrator.");
         } else if (signInErr.code === "auth/wrong-password") {
           throw new Error("Invalid password. Please check your credentials.");
         } else if (signInErr.code === "auth/too-many-requests") {
@@ -346,11 +355,16 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!backendData) {
-        await firebaseSignOut(auth);
+        try {
+          await deleteUser(userCredential.user);
+        } catch (delErr) {
+          console.warn("Could not delete unregistered Firebase user:", delErr);
+          await firebaseSignOut(auth);
+        }
         localStorage.removeItem(STORAGE_KEY);
         setUser(null);
         throw new Error(
-          `Access Denied: The account "${normalizedEmail}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+          `Access Denied: The account "${normalizedEmail}" is not registered in Roever AMS database. Only accounts added by Administrator can log in.`
         );
       }
 
@@ -506,11 +520,16 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (!backendData) {
-      await firebaseSignOut(auth);
+      try {
+        await deleteUser(userCredential.user);
+      } catch (delErr) {
+        console.warn("Could not delete unregistered Firebase user:", delErr);
+        await firebaseSignOut(auth);
+      }
       localStorage.removeItem(STORAGE_KEY);
       setUser(null);
       throw new Error(
-        `Access Denied: The Google account "${userCredential.user.email}" is not registered in Roever AMS. Please contact the Administrator to get your account added.`
+        `Access Denied: The Google account "${userCredential.user.email}" is not registered in Roever AMS database. Only accounts added by Administrator can log in.`
       );
     }
 
