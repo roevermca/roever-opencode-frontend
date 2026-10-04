@@ -94,8 +94,21 @@ function resolveFallbackUser(email, uid, displayName) {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return true;
+    }
+  });
   const [backendOnline, setBackendOnline] = useState(null);
 
   const verifyBackend = useCallback(async () => {
@@ -107,12 +120,14 @@ export const AuthProvider = ({ children }) => {
   // Centralized Firebase Authentication listener
   useEffect(() => {
     let isMounted = true;
+    let authUnsubscribe = () => {};
 
     async function initAuth() {
-      const isUp = await verifyBackend();
+      // Check backend concurrently without blocking Firebase auth resolution
+      const backendCheckPromise = verifyBackend();
 
       if (isFirebaseConfigured && auth) {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        authUnsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
           if (!isMounted) return;
 
           if (firebaseUser) {
@@ -206,10 +221,9 @@ export const AuthProvider = ({ children }) => {
           }
           if (isMounted) setLoading(false);
         });
-
-        return () => unsubscribe();
       } else {
         // Fallback when Firebase is not configured (direct dev token mode)
+        const isUp = await backendCheckPromise;
         const savedUserStr = localStorage.getItem(STORAGE_KEY);
         if (savedUserStr && isUp) {
           try {
@@ -251,6 +265,7 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
+      authUnsubscribe();
     };
   }, [verifyBackend]);
 

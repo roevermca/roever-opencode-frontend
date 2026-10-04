@@ -3,7 +3,7 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_BASE_URL = "https://roever-opencode-backend.onrender.com/api"
+  VITE_API_BASE_URL = "https://roever-opencode-backend-g3wy.onrender.com/api"
   VITE_FIREBASE_API_KEY = "AIzaSyDDJeMwYUza4OsupxBVzYXkp4-bN_IFqag"
   VITE_FIREBASE_AUTH_DOMAIN = "roever-ams.firebaseapp.com"
   VITE_FIREBASE_PROJECT_ID = "roever-ams"
