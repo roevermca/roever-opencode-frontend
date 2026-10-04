@@ -31,7 +31,6 @@ import {
   STAFF_DEPARTMENTS,
   SYSTEM_USER_ROLES,
   STAFF_STATUSES,
-  initialStaff,
 } from "../data/staff";
 
 // Clean any legacy mock storage on load
@@ -165,14 +164,12 @@ const StaffPage = () => {
     try {
       const res = await staffService.getStaff(params);
       let list = [];
-      if (res && Array.isArray(res.data) && res.data.length > 0) {
+      if (res && Array.isArray(res.data)) {
         list = [...res.data];
-      } else {
-        list = [...initialStaff];
       }
 
-      // Always guarantee current logged-in user (e.g. roevermca09@gmail.com) is pinned at top
-      if (user?.email) {
+      // If current logged-in user is in list, pin at top for convenience
+      if (user?.email && list.length > 0) {
         const userEmailLower = user.email.toLowerCase();
         const existingIdx = list.findIndex(
           (s) => s.email && s.email.toLowerCase() === userEmailLower
@@ -181,50 +178,17 @@ const StaffPage = () => {
           const currentItem = list[existingIdx];
           list.splice(existingIdx, 1);
           list.unshift(currentItem);
-        } else {
-          list.unshift({
-            id: user.id || `usr-${Date.now()}`,
-            name: user.displayName || user.name || "Roever Administrator",
-            email: user.email,
-            role: user.role || "ADMIN",
-            department: user.department || "Administration",
-            departmentId: user.department || "Administration",
-            status: "Active",
-            active: true,
-          });
         }
       }
 
       setStaffList(list);
       setTotalPages(res?.totalPages || 1);
-      setTotalElements(Math.max(res?.totalElements || list.length, list.length));
-    } catch {
-      let list = [...initialStaff];
-      if (user?.email) {
-        const userEmailLower = user.email.toLowerCase();
-        const existingIdx = list.findIndex(
-          (s) => s.email && s.email.toLowerCase() === userEmailLower
-        );
-        if (existingIdx >= 0) {
-          const currentItem = list[existingIdx];
-          list.splice(existingIdx, 1);
-          list.unshift(currentItem);
-        } else {
-          list.unshift({
-            id: user.id || `usr-${Date.now()}`,
-            name: user.displayName || user.name || "Roever Administrator",
-            email: user.email,
-            role: user.role || "ADMIN",
-            department: user.department || "Administration",
-            departmentId: user.department || "Administration",
-            status: "Active",
-            active: true,
-          });
-        }
-      }
-      setStaffList(list);
+      setTotalElements(res?.totalElements || list.length);
+    } catch (err) {
+      setError(err?.message || "Failed to load staff records from database.");
+      setStaffList([]);
       setTotalPages(1);
-      setTotalElements(list.length);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }

@@ -25,7 +25,6 @@ import { useAuth } from "../context/AuthContext";
 import studentService from "../services/studentService";
 import staffService from "../services/staffService";
 import reportService from "../services/reportService";
-import { dashboardStats } from "../data/mockData";
 import { formatPercentage } from "../utils/formatters";
 import { getTodayDateString } from "../data/attendance";
 
@@ -283,39 +282,35 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* 2. Four MUI KPI Stat Cards */}
+      {/* 2. Four KPI Stat Cards (Direct Database Metrics) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         <StatCard
-          title={dashboardStats.totalStudents.label}
+          title="Total Students"
           value={stats.totalStudents}
-          change={dashboardStats.totalStudents.change}
-          trendLabel="active learners"
+          trendLabel="in database"
           icon={Users}
           color="primary"
           loading={loading}
         />
         <StatCard
-          title={dashboardStats.totalStaff.label}
+          title="Total Staff"
           value={stats.totalStaff}
-          change={dashboardStats.totalStaff.change}
-          trendLabel="faculty members"
+          trendLabel="registered faculty"
           icon={GraduationCap}
           color="info"
           loading={loading}
         />
         <StatCard
-          title={dashboardStats.todayAttendance.label}
+          title="Today's Attendance"
           value={stats.todayAttendance}
-          change={dashboardStats.todayAttendance.change}
           trendLabel="today's turnout"
           icon={CalendarCheck}
           color="success"
           loading={loading}
         />
         <StatCard
-          title={dashboardStats.lowAttendance.label}
+          title="Low Attendance"
           value={stats.lowAttendance}
-          change={dashboardStats.lowAttendance.change}
           trendLabel="below 75% target"
           icon={AlertTriangle}
           color="warning"

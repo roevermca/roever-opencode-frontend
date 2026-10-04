@@ -34,7 +34,6 @@ import {
   STUDENT_STATUSES,
   DEPARTMENT_COURSES,
   getCoursesForDepartment,
-  initialStudents,
 } from "../data/students";
 import { parseYear, formatYear } from "../utils/formatters";
 
@@ -183,19 +182,20 @@ const StudentsPage = () => {
 
     try {
       const res = await studentService.getStudents(params);
-      if (res && Array.isArray(res.data) && res.data.length > 0) {
+      if (res && Array.isArray(res.data)) {
         setStudents(res.data);
         setTotalPages(res.totalPages || 1);
         setTotalElements(res.totalElements || res.data.length);
       } else {
-        setStudents(initialStudents);
+        setStudents([]);
         setTotalPages(1);
-        setTotalElements(initialStudents.length);
+        setTotalElements(0);
       }
-    } catch {
-      setStudents(initialStudents);
+    } catch (err) {
+      setError(err?.message || "Failed to load students from database.");
+      setStudents([]);
       setTotalPages(1);
-      setTotalElements(initialStudents.length);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
