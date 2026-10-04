@@ -18,15 +18,12 @@ const TopNavbar = ({ onDrawerToggle }) => {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2" title="Roever AMS Home">
           <img
-            src="/logo.png"
-            alt="Roever AMS Logo"
+            src="/icon.png"
+            alt="Roever AMS Icon"
             className="w-8 h-8 object-contain rounded-lg"
           />
-          <span className="font-bold text-lg text-slate-800 tracking-tight sm:block hidden">
-            Roever AMS
-          </span>
         </Link>
       </div>
 

@@ -162,15 +162,9 @@ const LoginPage = () => {
         <div className="text-center mb-6">
           <img
             src="/logo.png"
-            alt="Roever AMS Logo"
-            className="w-20 h-20 mx-auto object-contain drop-shadow-md mb-3 rounded-2xl"
+            alt="Hans Roever Attendance Management System"
+            className="h-16 sm:h-20 w-auto max-w-[280px] sm:max-w-xs mx-auto object-contain drop-shadow-xs mb-4"
           />
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-1">
-            Roever AMS
-          </h1>
-          <p className="text-sm text-slate-500 mb-3">
-            College Attendance Management System
-          </p>
 
           {/* System Status Badges */}
           <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -409,7 +403,7 @@ const LoginPage = () => {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-xs text-slate-400">
-            Roever College Attendance Management System &copy; 2026
+            &copy; 2026 Hans Roever. All rights reserved.
           </p>
         </div>
       </div>

@@ -53,8 +53,8 @@ const SidebarNav = ({ onItemClick }) => {
       {/* Brand Header */}
       <div className="flex items-center gap-3 p-2 mb-4 border-b border-slate-200">
         <img
-          src="/logo.png"
-          alt="Roever AMS Logo"
+          src="/icon.png"
+          alt="Roever AMS Icon"
           className="w-10 h-10 object-contain rounded-xl shadow-xs"
         />
         <div>
