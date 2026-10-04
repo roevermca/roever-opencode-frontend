@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="roever-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+    <linearGradient id="cap-surface" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.08" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Squircle with Roever Royal Blue Gradient -->
+  <rect width="64" height="64" rx="16" fill="url(#roever-grad)" />
+
+  <!-- Subtle Inner Border -->
+  <rect x="1" y="1" width="62" height="62" rx="15" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1.5" />
+
+  <!-- Graduation Cap Icon (Collegiate Roever AMS Branding) -->
+  <g transform="translate(10, 10) scale(1.833)" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Cap Mortarboard Diamond -->
+    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" fill="url(#cap-surface)" />
+    
+    <!-- Gold Tassel -->
+    <path d="M22 10v6" stroke="#FBBF24" stroke-width="2.4" />
+    <circle cx="22" cy="16.5" r="1.1" fill="#FBBF24" stroke="none" />
+    
+    <!-- Cap Base Arch -->
+    <path d="M6 12.5V16a6 6 0 0 0 12 0v-3.5" fill="none" />
+  </g>
+</svg>
