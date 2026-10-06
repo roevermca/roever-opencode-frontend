@@ -25,8 +25,8 @@
   }
 
   html.dark body {
-    background-color: #090d16;
-    color: #f1f5f9;
+    background-color: #090d16 !important;
+    color: #f1f5f9 !important;
   }
 
   #root {
@@ -34,4 +34,108 @@
     display: flex;
     flex-direction: column;
   }
+}
+
+/* ==========================================================================
+   Comprehensive Universal Dark Screen Engine (100% Component Coverage)
+   ========================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+/* 1. All White Cards, Containers, and Modals turn into Midnight Slate */
+html.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+html.dark aside,
+html.dark header,
+html.dark nav,
+html.dark .bg-slate-50,
+html.dark [class*="bg-slate-50"] {
+  background-color: #090d16 !important;
+}
+
+html.dark .bg-slate-100,
+html.dark [class*="bg-slate-100"] {
+  background-color: #1e293b !important;
+}
+
+/* 2. All Borders & Dividers */
+html.dark [class*="border-slate-100"],
+html.dark [class*="border-slate-200"],
+html.dark [class*="border-slate-300"] {
+  border-color: #1e293b !important;
+}
+
+html.dark [class*="divide-slate-100"] > :not(:first-child),
+html.dark [class*="divide-slate-200"] > :not(:first-child) {
+  border-color: #1e293b !important;
+}
+
+/* 3. Text Contrast */
+html.dark .text-slate-950,
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* 4. Form Controls: Inputs, Selects, and Textareas */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* 5. Interactive States: Hover & Active */
+html.dark .hover\:bg-slate-50:hover,
+html.dark .hover\:bg-slate-100:hover,
+html.dark [class*="hover:bg-slate-50"]:hover,
+html.dark [class*="hover:bg-slate-100"]:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* 6. Tables */
+html.dark table thead tr,
+html.dark table thead th {
+  background-color: #0b0f19 !important;
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark table tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.4) !important;
+}
+
+/* 7. Deep Shadows in Dark Mode */
+html.dark .shadow-xs,
+html.dark .shadow-sm,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl,
+html.dark .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.6) !important;
 }
