@@ -47,13 +47,16 @@ const AttendanceHistoryPage = () => {
     try {
       const res = await attendanceService.getAttendance(params);
       if (res && Array.isArray(res.data) && res.data.length > 0) {
-        const enriched = res.data.map((r) => {
+        // Exclude records of deleted students who no longer exist in the system
+        const validRecords = res.data.filter((r) => Boolean(r.studentName));
+
+        const enriched = validRecords.map((r) => {
           return {
             id: r.id,
             date: r.date,
             period: formatPeriod(r.period),
             studentId: r.studentId,
-            studentName: r.studentName || "Student",
+            studentName: r.studentName,
             studentRollNo: r.studentRollNo || r.studentId,
             department: r.department || "Academic Dept",
             year: r.year ? formatYear(r.year) : "",
