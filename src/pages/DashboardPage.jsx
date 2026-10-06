@@ -136,7 +136,7 @@ const DashboardPage = () => {
           : user?.role === "STAFF"
           ? Promise.all([
               departmentService.getDepartments(true).catch(() => []),
-              studentService.getStudents({ size: 1000 }).catch(() => ({ data: [] })),
+              studentService.getStudents({ size: 100 }).catch(() => ({ data: [] })),
             ])
               .then(([departments, stuListRes]) => {
                 const students = Array.isArray(stuListRes?.data) ? stuListRes.data : [];

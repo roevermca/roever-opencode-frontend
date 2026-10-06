@@ -32,33 +32,6 @@ const AttendanceHistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Student lookup map
-  const [studentsMap, setStudentsMap] = useState({});
-
-  useEffect(() => {
-    let isMounted = true;
-    async function loadStudents() {
-      try {
-        const res = await studentService.getStudents({ size: 100 }).catch(() => null);
-        if (isMounted) {
-          const map = {};
-          if (res && Array.isArray(res.data)) {
-            res.data.forEach((s) => {
-              map[s.id] = s;
-            });
-          }
-          setStudentsMap(map);
-        }
-      } catch {
-        if (isMounted) setStudentsMap({});
-      }
-    }
-    loadStudents();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   const fetchHistory = async () => {
     setLoading(true);
     setError(null);
@@ -75,17 +48,16 @@ const AttendanceHistoryPage = () => {
       const res = await attendanceService.getAttendance(params);
       if (res && Array.isArray(res.data) && res.data.length > 0) {
         const enriched = res.data.map((r) => {
-          const stu = studentsMap[r.studentId] || {};
           return {
             id: r.id,
             date: r.date,
             period: formatPeriod(r.period),
             studentId: r.studentId,
-            studentName: stu.name || `Student (${r.studentId?.slice(-6)})`,
-            studentRollNo: stu.rollNo || r.studentId,
-            department: stu.department || "Academic Dept",
-            year: stu.year ? formatYear(stu.year) : "",
-            section: stu.section || "",
+            studentName: r.studentName || "Student",
+            studentRollNo: r.studentRollNo || r.studentId,
+            department: r.department || "Academic Dept",
+            year: r.year ? formatYear(r.year) : "",
+            section: r.section || "",
             status: r.status === "PRESENT" ? "Present" : "Absent",
             markedBy: r.markedBy || "Faculty Staff",
             markedTime: r.markedAt
@@ -107,7 +79,7 @@ const AttendanceHistoryPage = () => {
 
         setRecords(filtered);
         setTotalPages(res.totalPages || 1);
-        setTotalElements(res.totalElements || res.data.length);
+        setTotalElements(res.totalElements || filtered.length);
       } else {
         setRecords([]);
         setTotalPages(1);
@@ -125,7 +97,19 @@ const AttendanceHistoryPage = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [filters, currentPage, Object.keys(studentsMap).length]);
+  }, [filters, currentPage]);
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      fetchHistory();
+    };
+    window.addEventListener("ams_data_updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+    return () => {
+      window.removeEventListener("ams_data_updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+    };
+  }, []);
 
   const handleResetFilters = () => {
     setFilters(emptyHistoryFilters);

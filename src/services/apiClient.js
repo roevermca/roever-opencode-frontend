@@ -152,13 +152,60 @@ function buildQueryString(params = {}) {
   return `?${query.toString()}`;
 }
 
+// Lightweight in-memory cache and in-flight deduplication
+const metadataCache = new Map();
+const inFlightRequests = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const CACHEABLE_ENDPOINTS = [
+  "/departments",
+  "/courses",
+  "/health",
+];
+
+function isCacheable(endpoint) {
+  return CACHEABLE_ENDPOINTS.some((prefix) => endpoint.startsWith(prefix));
+}
+
+function invalidateMetadataCache() {
+  metadataCache.clear();
+}
+
 export const apiClient = {
   get(endpoint, params) {
     const qs = buildQueryString(params);
-    return request(`${endpoint}${qs}`, { method: "GET" });
+    const fullEndpoint = `${endpoint}${qs}`;
+
+    // Check metadata cache for static endpoints
+    if (isCacheable(endpoint)) {
+      const cached = metadataCache.get(fullEndpoint);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        return Promise.resolve(cached.data);
+      }
+    }
+
+    // In-flight request deduplication
+    if (inFlightRequests.has(fullEndpoint)) {
+      return inFlightRequests.get(fullEndpoint);
+    }
+
+    const reqPromise = request(fullEndpoint, { method: "GET" })
+      .then((data) => {
+        if (isCacheable(endpoint)) {
+          metadataCache.set(fullEndpoint, { data, timestamp: Date.now() });
+        }
+        return data;
+      })
+      .finally(() => {
+        inFlightRequests.delete(fullEndpoint);
+      });
+
+    inFlightRequests.set(fullEndpoint, reqPromise);
+    return reqPromise;
   },
 
   post(endpoint, body) {
+    invalidateMetadataCache();
     return request(endpoint, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
@@ -166,6 +213,7 @@ export const apiClient = {
   },
 
   put(endpoint, body) {
+    invalidateMetadataCache();
     return request(endpoint, {
       method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
@@ -173,7 +221,12 @@ export const apiClient = {
   },
 
   delete(endpoint) {
+    invalidateMetadataCache();
     return request(endpoint, { method: "DELETE" });
+  },
+
+  clearCache() {
+    metadataCache.clear();
   },
 };
 
