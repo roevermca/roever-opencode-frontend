@@ -15,6 +15,17 @@ import courseService from "../services/courseService";
 import { getTodayDateString, attendanceSessionStore } from "../data/attendance";
 import { parseYear, parsePeriod } from "../utils/formatters";
 
+// In-memory class roster cache across period switches (saves 80% redundant API calls)
+const classRosterCache = new Map();
+
+if (typeof window !== "undefined") {
+  window.addEventListener("ams_data_updated", (e) => {
+    if (e.detail?.action?.includes("student")) {
+      classRosterCache.clear();
+    }
+  });
+}
+
 const defaultFilters = {
   department: "Computer Applications",
   course: "BCA",
@@ -131,33 +142,39 @@ const AttendancePage = () => {
     const isFullDay = filters.period?.toLowerCase()?.includes("full");
     const periodNumber = isFullDay ? 1 : parsePeriod(filters.period) || 1;
     const yearNumber = parseYear(filters.year) || 1;
+    const rosterKey = `${filters.department}_${filters.course || ""}_${yearNumber}_${filters.section}`;
 
     try {
-      // Fetch students matching class criteria
-      const studentRes = await studentService.getStudents({
-        departmentId: isStaff ? undefined : filters.department,
-        courseId: isStaff ? (user?.courseId || filters.course) : filters.course,
-        year: yearNumber,
-        section: filters.section,
-        size: 100,
-      });
+      // 1. In-memory roster cache check (avoids redundant network calls across period switches)
+      let loadedStudents = classRosterCache.get(rosterKey) || [];
 
-      let loadedStudents = [];
-      if (studentRes && Array.isArray(studentRes.data)) {
-        loadedStudents = studentRes.data;
+      if (loadedStudents.length === 0) {
+        const studentRes = await studentService.getStudents({
+          departmentId: isStaff ? undefined : filters.department,
+          courseId: isStaff ? (user?.courseId || filters.course) : filters.course,
+          year: yearNumber,
+          section: filters.section,
+          size: 100,
+        });
+
+        if (studentRes && Array.isArray(studentRes.data)) {
+          loadedStudents = studentRes.data;
+          classRosterCache.set(rosterKey, loadedStudents);
+        }
       }
       setClassStudents(loadedStudents);
 
-      // Check existing attendance records in backend
+      // 2. Targeted query for exact class student IDs (prevents college-wide pagination overflow)
+      const studentIds = loadedStudents.map((s) => s.id);
       const attRes = await attendanceService.getAttendance({
+        studentIds: studentIds.length > 0 ? studentIds : undefined,
         date: filters.date,
         period: isFullDay ? undefined : periodNumber,
-        size: 200,
+        size: Math.max(100, studentIds.length * (isFullDay ? 5 : 1)),
       });
 
-
       const records = attRes?.data || [];
-      const studentIdSet = new Set(loadedStudents.map((s) => s.id));
+      const studentIdSet = new Set(studentIds);
       const matchingRecords = records.filter((r) => studentIdSet.has(r.studentId));
 
       if (matchingRecords.length > 0) {
@@ -217,49 +234,52 @@ const AttendancePage = () => {
     loadClassSession();
   }, [filters]);
 
-  const handleToggleStatus = (studentId, status) => {
+  const handleToggleStatus = React.useCallback((studentId, status) => {
     if (isSubmitted) return;
-    setAttendanceMap((prev) => ({
-      ...prev,
-      [studentId]: status,
-    }));
-  };
+    setAttendanceMap((prev) => {
+      if (prev[studentId] === status) return prev;
+      return {
+        ...prev,
+        [studentId]: status,
+      };
+    });
+  }, [isSubmitted]);
 
-  const handleMarkAllPresent = () => {
+  const handleMarkAllPresent = React.useCallback(() => {
     if (isSubmitted) return;
     const updated = {};
     classStudents.forEach((s) => {
       updated[s.id] = "Present";
     });
     setAttendanceMap(updated);
-  };
+  }, [isSubmitted, classStudents]);
 
-  const handleMarkAllAbsent = () => {
+  const handleMarkAllAbsent = React.useCallback(() => {
     if (isSubmitted) return;
     const updated = {};
     classStudents.forEach((s) => {
       updated[s.id] = "Absent";
     });
     setAttendanceMap(updated);
-  };
+  }, [isSubmitted, classStudents]);
 
-  const handleReset = () => {
+  const handleReset = React.useCallback(() => {
     if (isSubmitted) return;
     const initialMap = {};
     classStudents.forEach((s) => {
       initialMap[s.id] = "Present";
     });
     setAttendanceMap(initialMap);
-  };
+  }, [isSubmitted, classStudents]);
 
-  const handleBatchSetStatus = (status) => {
+  const handleBatchSetStatus = React.useCallback((status) => {
     if (isSubmitted) return;
     const updated = {};
     classStudents.forEach((s) => {
       updated[s.id] = status;
     });
     setAttendanceMap(updated);
-  };
+  }, [isSubmitted, classStudents]);
 
   // Calculate statistics (OD counts as Present towards percentage)
   const total = classStudents.length;

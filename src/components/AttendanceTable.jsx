@@ -1,6 +1,108 @@
 import React from "react";
-import { Check, X, Award, Clock, UserX, Loader2, CheckCheck } from "lucide-react";
+import { Check, X, Award, Clock, UserX, Loader2 } from "lucide-react";
 import EmptyState from "./EmptyState";
+
+const AttendanceRow = React.memo(
+  ({ student, index, currentStatus, isSubmitted, onToggleStatus }) => {
+    const isPresent = currentStatus === "Present";
+    const isAbsent = currentStatus === "Absent";
+    const isOD = currentStatus === "On-Duty" || currentStatus === "OD";
+    const isLate = currentStatus === "Late";
+
+    return (
+      <tr className="hover:bg-slate-50/70 transition-colors">
+        <td className="pl-5 pr-2 py-3 text-center text-xs font-medium text-slate-400">
+          {index + 1}
+        </td>
+        <td className="px-4 py-3 font-bold text-slate-900 text-xs sm:text-sm">
+          {student.rollNo}
+        </td>
+        <td className="px-4 py-3">
+          <div className="font-semibold text-slate-900 text-xs sm:text-sm">
+            {student.name}
+          </div>
+          <div className="text-[11px] text-slate-400 truncate max-w-[240px]">
+            {student.email}
+          </div>
+        </td>
+        <td className="pl-4 pr-5 py-3 text-right">
+          <div className="inline-flex rounded-xl shadow-2xs border border-slate-200/80 p-0.5 bg-slate-100/70">
+            {/* 1. Present */}
+            <button
+              type="button"
+              disabled={isSubmitted}
+              onClick={() => onToggleStatus(student.id, "Present")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                isPresent
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-emerald-700 hover:bg-white/80"
+              } disabled:cursor-not-allowed`}
+              title="Mark Present"
+            >
+              <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+              Present
+            </button>
+
+            {/* 2. Absent */}
+            <button
+              type="button"
+              disabled={isSubmitted}
+              onClick={() => onToggleStatus(student.id, "Absent")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                isAbsent
+                  ? "bg-rose-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-rose-700 hover:bg-white/80"
+              } disabled:cursor-not-allowed`}
+              title="Mark Absent"
+            >
+              <X className="w-3.5 h-3.5 stroke-[2.5]" />
+              Absent
+            </button>
+
+            {/* 3. On-Duty (OD) */}
+            <button
+              type="button"
+              disabled={isSubmitted}
+              onClick={() => onToggleStatus(student.id, "On-Duty")}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                isOD
+                  ? "bg-purple-600 text-white shadow-xs"
+                  : "text-slate-600 hover:text-purple-700 hover:bg-white/80"
+              } disabled:cursor-not-allowed`}
+              title="Mark On-Duty (OD for sports, symposium, NSS/NCC)"
+            >
+              <Award className="w-3.5 h-3.5 stroke-[2.5]" />
+              OD
+            </button>
+
+            {/* 4. Late */}
+            <button
+              type="button"
+              disabled={isSubmitted}
+              onClick={() => onToggleStatus(student.id, "Late")}
+              className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                isLate
+                  ? "bg-amber-500 text-slate-950 shadow-xs"
+                  : "text-slate-600 hover:text-amber-700 hover:bg-white/80"
+              } disabled:cursor-not-allowed`}
+              title="Mark Late"
+            >
+              <Clock className="w-3.5 h-3.5 stroke-[2.5]" />
+              Late
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  },
+  (prev, next) =>
+    prev.currentStatus === next.currentStatus &&
+    prev.isSubmitted === next.isSubmitted &&
+    prev.student.id === next.student.id &&
+    prev.index === next.index
+);
+
+AttendanceRow.displayName = "AttendanceRow";
 
 const AttendanceTable = ({
   students = [],
@@ -10,7 +112,8 @@ const AttendanceTable = ({
   isSubmitted = false,
   loading = false,
 }) => {
-  if (loading) {
+  // If loading and there are no students loaded yet, show initial spinner
+  if (loading && students.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] border border-slate-200/80 py-16 text-center flex flex-col items-center justify-center gap-2">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -39,7 +142,14 @@ const AttendanceTable = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] border border-slate-200/80 overflow-hidden">
+    <div className="relative bg-white rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.04)] border border-slate-200/80 overflow-hidden">
+      {/* Non-destructive in-place loading indicator (preserves table DOM) */}
+      {loading && (
+        <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-blue-100 overflow-hidden">
+          <div className="h-full bg-blue-600 animate-pulse w-full" />
+        </div>
+      )}
+
       {/* Quick Batch Actions Toolbar */}
       {!isSubmitted && (
         <div className="px-5 py-3 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -76,7 +186,7 @@ const AttendanceTable = ({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      <div className={`overflow-x-auto transition-opacity duration-150 ${loading ? "opacity-60" : "opacity-100"}`}>
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             <tr>
@@ -95,102 +205,16 @@ const AttendanceTable = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {students.map((student, index) => {
-              const currentStatus = attendanceMap[student.id] || "Present";
-              const isPresent = currentStatus === "Present";
-              const isAbsent = currentStatus === "Absent";
-              const isOD = currentStatus === "On-Duty" || currentStatus === "OD";
-              const isLate = currentStatus === "Late";
-
-              return (
-                <tr
-                  key={student.id}
-                  className="hover:bg-slate-50/70 transition-colors"
-                >
-                  <td className="pl-5 pr-2 py-3 text-center text-xs font-medium text-slate-400">
-                    {index + 1}
-                  </td>
-                  <td className="px-4 py-3 font-bold text-slate-900 text-xs sm:text-sm">
-                    {student.rollNo}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-slate-900 text-xs sm:text-sm">
-                      {student.name}
-                    </div>
-                    <div className="text-[11px] text-slate-400 truncate max-w-[240px]">
-                      {student.email}
-                    </div>
-                  </td>
-                  <td className="pl-4 pr-5 py-3 text-right">
-                    <div className="inline-flex rounded-xl shadow-2xs border border-slate-200/80 p-0.5 bg-slate-100/70">
-                      {/* 1. Present */}
-                      <button
-                        type="button"
-                        disabled={isSubmitted}
-                        onClick={() => onToggleStatus(student.id, "Present")}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          isPresent
-                            ? "bg-emerald-600 text-white shadow-xs"
-                            : "text-slate-600 hover:text-emerald-700 hover:bg-white/80"
-                        } disabled:cursor-not-allowed`}
-                        title="Mark Present"
-                      >
-                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                        Present
-                      </button>
-
-                      {/* 2. Absent */}
-                      <button
-                        type="button"
-                        disabled={isSubmitted}
-                        onClick={() => onToggleStatus(student.id, "Absent")}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          isAbsent
-                            ? "bg-rose-600 text-white shadow-xs"
-                            : "text-slate-600 hover:text-rose-700 hover:bg-white/80"
-                        } disabled:cursor-not-allowed`}
-                        title="Mark Absent"
-                      >
-                        <X className="w-3.5 h-3.5 stroke-[2.5]" />
-                        Absent
-                      </button>
-
-                      {/* 3. On-Duty (OD) */}
-                      <button
-                        type="button"
-                        disabled={isSubmitted}
-                        onClick={() => onToggleStatus(student.id, "On-Duty")}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          isOD
-                            ? "bg-purple-600 text-white shadow-xs"
-                            : "text-slate-600 hover:text-purple-700 hover:bg-white/80"
-                        } disabled:cursor-not-allowed`}
-                        title="Mark On-Duty (OD for sports, symposium, NSS/NCC)"
-                      >
-                        <Award className="w-3.5 h-3.5 stroke-[2.5]" />
-                        OD
-                      </button>
-
-                      {/* 4. Late */}
-                      <button
-                        type="button"
-                        disabled={isSubmitted}
-                        onClick={() => onToggleStatus(student.id, "Late")}
-                        className={`inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          isLate
-                            ? "bg-amber-500 text-slate-950 shadow-xs"
-                            : "text-slate-600 hover:text-amber-700 hover:bg-white/80"
-                        } disabled:cursor-not-allowed`}
-                        title="Mark Late"
-                      >
-                        <Clock className="w-3.5 h-3.5 stroke-[2.5]" />
-                        Late
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {students.map((student, index) => (
+              <AttendanceRow
+                key={student.id}
+                student={student}
+                index={index}
+                currentStatus={attendanceMap[student.id] || "Present"}
+                isSubmitted={isSubmitted}
+                onToggleStatus={onToggleStatus}
+              />
+            ))}
           </tbody>
         </table>
       </div>
@@ -198,4 +222,4 @@ const AttendanceTable = ({
   );
 };
 
-export default AttendanceTable;
+export default React.memo(AttendanceTable);

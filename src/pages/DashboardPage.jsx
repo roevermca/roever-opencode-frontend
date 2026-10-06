@@ -267,7 +267,7 @@ const DashboardPage = () => {
     loadDashboardData(Boolean(cached));
 
     const handleDataRefresh = () => {
-      loadDashboardData(false);
+      loadDashboardData(true);
     };
     window.addEventListener("ams_data_updated", handleDataRefresh);
     window.addEventListener("focus", handleDataRefresh);

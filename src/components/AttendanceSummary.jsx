@@ -125,4 +125,4 @@ const AttendanceSummary = ({
   );
 };
 
-export default AttendanceSummary;
+export default React.memo(AttendanceSummary);

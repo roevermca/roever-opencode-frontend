@@ -147,7 +147,15 @@ function buildQueryString(params = {}) {
   if (entries.length === 0) return "";
   const query = new URLSearchParams();
   for (const [k, v] of entries) {
-    query.append(k, v);
+    if (Array.isArray(v)) {
+      v.forEach((item) => {
+        if (item !== undefined && item !== null && item !== "") {
+          query.append(k, item);
+        }
+      });
+    } else {
+      query.append(k, v);
+    }
   }
   return `?${query.toString()}`;
 }
