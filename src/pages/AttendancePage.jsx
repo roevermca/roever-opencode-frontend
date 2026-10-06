@@ -492,16 +492,16 @@ const AttendancePage = () => {
 
       {/* Sticky Bottom Executive Bar for Phones (sm:hidden) */}
       {!isSubmitted && total > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] px-4 py-3 sm:hidden flex items-center justify-between gap-3">
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.15)] px-4 py-3 sm:hidden flex items-center justify-between gap-3 transition-colors">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-800">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
               P: {presentCount}
             </span>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-rose-100 text-rose-800">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
               A: {absentCount}
             </span>
             {odCount > 0 && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-purple-100 text-purple-800">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                 OD: {odCount}
               </span>
             )}
@@ -510,7 +510,7 @@ const AttendancePage = () => {
             type="button"
             onClick={() => setShowConfirmModal(true)}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black rounded-xl text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-xs transition-all disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black rounded-xl text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-xs transition-all disabled:opacity-40 cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
             Submit

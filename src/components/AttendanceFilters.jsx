@@ -58,8 +58,13 @@ const AttendanceFilters = ({
       const newCourses = getCoursesForDepartment(value);
       const nextCourse = newCourses.length > 0 ? newCourses[0] : "";
       const isNextPg = isPgCourse(nextCourse);
-      const currentYearNum = parseYear(filters.year) || 1;
-      const nextYear = isNextPg && currentYearNum > 2 ? "1st Year" : (filters.year || "1st Year");
+      const currentYear = parseYear(filters.year);
+
+      let nextYear = filters.year;
+      if (isNextPg && currentYear > 2) {
+        nextYear = "1st Year";
+      }
+
       onFilterChange({
         ...filters,
         department: value,
@@ -67,31 +72,39 @@ const AttendanceFilters = ({
         year: nextYear,
       });
     } else if (field === "course") {
-      const isNextPg = isPgCourse(value);
-      const currentYearNum = parseYear(filters.year) || 1;
-      const nextYear = isNextPg && currentYearNum > 2 ? "1st Year" : (filters.year || "1st Year");
+      const isCoursePg = isPgCourse(value);
+      const currentYear = parseYear(filters.year);
+
+      let nextYear = filters.year;
+      if (isCoursePg && currentYear > 2) {
+        nextYear = "1st Year";
+      }
+
       onFilterChange({
         ...filters,
         course: value,
         year: nextYear,
       });
     } else {
-      onFilterChange({ ...filters, [field]: value });
+      onFilterChange({
+        ...filters,
+        [field]: value,
+      });
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-200/90 mb-6 overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-200/90 dark:border-slate-800 mb-6 overflow-hidden transition-colors">
       {/* Header bar */}
-      <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
         <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-blue-600" />
-          <h2 className="font-bold text-slate-800 text-base">
+          <Layers className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <h2 className="font-extrabold text-slate-800 dark:text-slate-100 text-base">
             Select Class & Session
           </h2>
         </div>
         {isStaff && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-800 border border-sky-200">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
             <Lock className="w-3.5 h-3.5" />
             Staff Assigned Scope
           </span>
@@ -103,14 +116,14 @@ const AttendanceFilters = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           {/* Department */}
           <div className="lg:col-span-3">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Department <span className="text-red-500">*</span>
             </label>
             <select
               value={filters.department || ""}
               disabled={disabled || isStaff}
               onChange={(e) => handleChange("department", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             >
               <option value="">Choose Department</option>
               {departmentOptions.map((dept) => (
@@ -120,7 +133,7 @@ const AttendanceFilters = ({
               ))}
             </select>
             {isStaff && (
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Assigned department locked to staff profile.
               </p>
             )}
@@ -128,14 +141,14 @@ const AttendanceFilters = ({
 
           {/* Degree / Course */}
           <div className="lg:col-span-3">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Degree / Course <span className="text-red-500">*</span>
             </label>
             <select
               value={filters.course || ""}
               disabled={disabled || isStaff || !filters.department}
               onChange={(e) => handleChange("course", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             >
               <option value="">
                 {filters.department
@@ -149,11 +162,11 @@ const AttendanceFilters = ({
               ))}
             </select>
             {isStaff ? (
-              <p className="mt-1 text-xs font-medium text-blue-600">
+              <p className="mt-1 text-xs font-medium text-blue-600 dark:text-blue-400">
                 Assigned course: {staffCourse || filters.course} (Access restricted)
               </p>
             ) : (
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Cascades based on selected department.
               </p>
             )}
@@ -161,14 +174,14 @@ const AttendanceFilters = ({
 
           {/* Academic Year */}
           <div className="sm:col-span-1 lg:col-span-1">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Academic Year <span className="text-red-500">*</span>
             </label>
             <select
               value={formatYear(filters.year) || filters.year || "1st Year"}
               disabled={disabled}
               onChange={(e) => handleChange("year", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             >
               {yearOptions.map((yr) => (
                 <option key={yr} value={yr}>
@@ -180,14 +193,14 @@ const AttendanceFilters = ({
 
           {/* Section */}
           <div className="sm:col-span-1 lg:col-span-1">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Section <span className="text-red-500">*</span>
             </label>
             <select
               value={filters.section || ""}
               disabled={disabled}
               onChange={(e) => handleChange("section", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             >
               {STUDENT_SECTIONS.map((sec) => (
                 <option key={sec} value={sec}>
@@ -199,7 +212,7 @@ const AttendanceFilters = ({
 
           {/* Date */}
           <div className="sm:col-span-1 lg:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Attendance Date <span className="text-red-500">*</span>
             </label>
             <input
@@ -207,20 +220,20 @@ const AttendanceFilters = ({
               value={filters.date || ""}
               disabled={disabled}
               onChange={(e) => handleChange("date", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             />
           </div>
 
           {/* Period - EXACTLY 5 periods */}
           <div className="sm:col-span-1 lg:col-span-2">
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Class Period <span className="text-red-500">*</span>
             </label>
             <select
               value={filters.period || ""}
               disabled={disabled}
               onChange={(e) => handleChange("period", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100 dark:disabled:bg-slate-850 disabled:text-slate-500 disabled:cursor-not-allowed transition-colors"
             >
               {ATTENDANCE_PERIODS.map((p) => (
                 <option key={p} value={p}>
