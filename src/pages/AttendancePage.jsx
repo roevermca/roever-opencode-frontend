@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { History, CheckCircle2, AlertCircle, RotateCcw } from "lucide-react";
+import { History, CheckCircle2, AlertCircle, RotateCcw, Send } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import AttendanceFilters from "../components/AttendanceFilters";
 import AttendanceSummary from "../components/AttendanceSummary";
@@ -384,7 +384,7 @@ const AttendancePage = () => {
   };
 
   return (
-    <div>
+    <div className="pb-24 sm:pb-8">
       <PageHeader
         title="Mark Attendance"
         description="Select class criteria, record student attendance status, and submit period records."
@@ -489,6 +489,34 @@ const AttendancePage = () => {
         confirmText="Confirm & Submit"
         confirmVariant="primary"
       />
+
+      {/* Sticky Bottom Executive Bar for Phones (sm:hidden) */}
+      {!isSubmitted && total > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] px-4 py-3 sm:hidden flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-emerald-100 text-emerald-800">
+              P: {presentCount}
+            </span>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-rose-100 text-rose-800">
+              A: {absentCount}
+            </span>
+            {odCount > 0 && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-black bg-purple-100 text-purple-800">
+                OD: {odCount}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowConfirmModal(true)}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-black rounded-xl text-white bg-blue-600 hover:bg-blue-700 active:scale-95 shadow-xs transition-all disabled:opacity-40"
+          >
+            <Send className="w-3.5 h-3.5" />
+            Submit
+          </button>
+        </div>
+      )}
     </div>
   );
 };

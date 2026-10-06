@@ -14,16 +14,19 @@ const TopNavbar = ({ onDrawerToggle }) => {
           type="button"
           aria-label="Toggle navigation menu"
           onClick={onDrawerToggle}
-          className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-hidden transition-colors"
+          className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 stroke-[2.2]" />
         </button>
-        <Link to="/" className="flex items-center gap-2" title="Roever AMS Home">
+        <Link to="/" className="flex items-center gap-2.5" title="Roever AMS Home">
           <img
             src="/icon.png"
             alt="Roever AMS Icon"
-            className="w-8 h-8 object-contain rounded-lg"
+            className="w-8 h-8 object-contain rounded-xl shadow-2xs"
           />
+          <span className="lg:hidden font-black text-sm text-slate-900 tracking-tight">
+            Roever AMS
+          </span>
         </Link>
       </div>
 

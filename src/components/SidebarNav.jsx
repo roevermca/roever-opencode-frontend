@@ -78,14 +78,14 @@ const SidebarNav = ({ onItemClick }) => {
               end
               onClick={onItemClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                `flex items-center gap-3 px-3.5 py-2.5 min-h-[44px] rounded-xl text-sm font-bold transition-all ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-blue-600 text-white shadow-xs ring-2 ring-blue-600/25"
+                    : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
                 }`
               }
             >
-              <Icon size={18} strokeWidth={2.2} />
+              <Icon size={19} strokeWidth={2.2} />
               <span>{item.label}</span>
             </NavLink>
           );

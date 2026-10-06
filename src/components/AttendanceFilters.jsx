@@ -81,7 +81,7 @@ const AttendanceFilters = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-xs border border-slate-200 mb-6 overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-slate-200/90 mb-6 overflow-hidden">
       {/* Header bar */}
       <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
         <div className="flex items-center gap-2">

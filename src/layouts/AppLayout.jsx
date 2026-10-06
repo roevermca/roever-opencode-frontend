@@ -26,7 +26,7 @@ const AppLayout = () => {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-slate-950/50 transition-opacity"
             onClick={handleDrawerClose}
             aria-hidden="true"
           />
@@ -37,14 +37,14 @@ const AppLayout = () => {
       )}
 
       {/* Desktop Sidebar (Permanent) */}
-      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200">
+      <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/90 shadow-2xs">
         <SidebarNav />
       </aside>
 
       {/* Main Content Area */}
       <div className="lg:pl-64 flex flex-col flex-1 min-w-0">
         <TopNavbar onDrawerToggle={handleDrawerToggle} />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
