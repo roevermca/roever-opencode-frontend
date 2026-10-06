@@ -1,25 +1,50 @@
 import apiClient from "./apiClient";
 
+let departmentsCache = null;
+let cacheExpiry = 0;
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
 export const departmentService = {
-  getDepartments(active) {
-    return apiClient.get("/departments", { active });
+  async getDepartments(active, forceRefresh = false) {
+    const now = Date.now();
+    if (!forceRefresh && active === undefined && departmentsCache && now < cacheExpiry) {
+      return departmentsCache;
+    }
+    const data = await apiClient.get("/departments", { active });
+    if (active === undefined && Array.isArray(data)) {
+      departmentsCache = data;
+      cacheExpiry = now + CACHE_TTL_MS;
+    }
+    return data;
+  },
+
+  clearCache() {
+    departmentsCache = null;
+    cacheExpiry = 0;
   },
 
   getDepartmentById(id) {
     return apiClient.get(`/departments/${id}`);
   },
 
-  createDepartment(data) {
-    return apiClient.post("/departments", data);
+  async createDepartment(data) {
+    const res = await apiClient.post("/departments", data);
+    departmentService.clearCache();
+    return res;
   },
 
-  updateDepartment(id, data) {
-    return apiClient.put(`/departments/${id}`, data);
+  async updateDepartment(id, data) {
+    const res = await apiClient.put(`/departments/${id}`, data);
+    departmentService.clearCache();
+    return res;
   },
 
-  deleteDepartment(id) {
-    return apiClient.delete(`/departments/${id}`);
+  async deleteDepartment(id) {
+    const res = await apiClient.delete(`/departments/${id}`);
+    departmentService.clearCache();
+    return res;
   },
 };
 
 export default departmentService;
+

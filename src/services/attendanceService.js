@@ -1,8 +1,18 @@
 import apiClient from "./apiClient";
 
+function invalidateDashboardCache() {
+  try {
+    sessionStorage.removeItem("ams_dashboard_cache_v1");
+  } catch {
+    // ignore
+  }
+}
+
 export const attendanceService = {
-  markAttendanceBulk(data) {
-    return apiClient.post("/attendance/bulk", data);
+  async markAttendanceBulk(data) {
+    const res = await apiClient.post("/attendance/bulk", data);
+    invalidateDashboardCache();
+    return res;
   },
 
   getAttendance(params = {}) {
@@ -17,9 +27,12 @@ export const attendanceService = {
     return apiClient.get(`/attendance/student/${studentId}/summary`);
   },
 
-  updateAttendance(id, data) {
-    return apiClient.put(`/attendance/${id}`, data);
+  async updateAttendance(id, data) {
+    const res = await apiClient.put(`/attendance/${id}`, data);
+    invalidateDashboardCache();
+    return res;
   },
 };
+
 
 export default attendanceService;

@@ -444,7 +444,7 @@ const LoginPage = () => {
               </div>
               <input
                 type="email"
-                placeholder="name@amsportal.edu or your Gmail"
+                placeholder="Enter your email address"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
                 disabled={forgotLoading || Boolean(forgotSuccess)}

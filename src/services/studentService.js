@@ -1,5 +1,13 @@
 import apiClient from "./apiClient";
 
+function invalidateDashboardCache() {
+  try {
+    sessionStorage.removeItem("ams_dashboard_cache_v1");
+  } catch {
+    // ignore
+  }
+}
+
 export const studentService = {
   getStudents(params = {}) {
     return apiClient.get("/students", params);
@@ -9,21 +17,30 @@ export const studentService = {
     return apiClient.get(`/students/${id}`);
   },
 
-  createStudent(data) {
-    return apiClient.post("/students", data);
+  async createStudent(data) {
+    const res = await apiClient.post("/students", data);
+    invalidateDashboardCache();
+    return res;
   },
 
-  createStudentsBulk(data) {
-    return apiClient.post("/students/bulk", data);
+  async createStudentsBulk(data) {
+    const res = await apiClient.post("/students/bulk", data);
+    invalidateDashboardCache();
+    return res;
   },
 
-  updateStudent(id, data) {
-    return apiClient.put(`/students/${id}`, data);
+  async updateStudent(id, data) {
+    const res = await apiClient.put(`/students/${id}`, data);
+    invalidateDashboardCache();
+    return res;
   },
 
-  deleteStudent(id) {
-    return apiClient.delete(`/students/${id}`);
+  async deleteStudent(id) {
+    const res = await apiClient.delete(`/students/${id}`);
+    invalidateDashboardCache();
+    return res;
   },
 };
+
 
 export default studentService;

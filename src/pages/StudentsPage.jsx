@@ -64,7 +64,8 @@ const StudentsPage = () => {
   const isStaff = user?.role === "STAFF";
   const isStudent = user?.role === "STUDENT";
   const isHod = user?.role === "HOD";
-  const canManage = !isStaff && !isStudent;
+  const canManage = !isStudent;
+
 
   // Data & loading states
   const [students, setStudents] = useState([]);
@@ -236,15 +237,32 @@ const StudentsPage = () => {
 
   // Form Handling
   const handleOpenAdd = () => {
+    let defaultDept = isHod ? user?.department || "" : "";
+    let defaultCourse = "";
+
+    if (isStaff) {
+      if (user?.department) defaultDept = user.department;
+      if (user?.courseId) {
+        const matched = courses.find(
+          (c) =>
+            c.id === user.courseId ||
+            c.code === user.courseId ||
+            c.name?.toLowerCase() === user.courseId.toLowerCase()
+        );
+        defaultCourse = matched ? matched.name : user.courseId;
+      }
+    }
+
     setFormData({
       ...emptyStudentForm,
-      departmentId: isHod ? user?.department || "" : "",
-      courseId: "",
+      departmentId: defaultDept,
+      courseId: defaultCourse,
     });
     setFormErrors({});
     setIsEditMode(false);
     setIsFormOpen(true);
   };
+
 
   const handleOpenEdit = (student) => {
     const matchedDept = departments.find(
@@ -420,6 +438,16 @@ const StudentsPage = () => {
         await studentService.createStudent(payload);
         showNotification(`Student "${formData.name}" added successfully.`);
       }
+      try {
+        sessionStorage.removeItem("ams_dashboard_cache_v1");
+        window.dispatchEvent(
+          new CustomEvent("ams_data_updated", {
+            detail: { action: isEditMode ? "update_student" : "create_student" },
+          })
+        );
+      } catch {
+        // ignore
+      }
       setIsFormOpen(false);
       fetchStudents();
     } catch (err) {
@@ -436,6 +464,16 @@ const StudentsPage = () => {
     try {
       await studentService.deleteStudent(targetId);
       showNotification(`Student "${target.name}" deleted successfully.`);
+      try {
+        sessionStorage.removeItem("ams_dashboard_cache_v1");
+        window.dispatchEvent(
+          new CustomEvent("ams_data_updated", {
+            detail: { action: "delete_student", id: targetId },
+          })
+        );
+      } catch {
+        // ignore
+      }
       await fetchStudents();
     } catch (err) {
       showNotification(`Failed to delete student: ${err.message}`);

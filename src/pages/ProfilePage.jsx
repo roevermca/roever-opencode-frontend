@@ -21,7 +21,7 @@ import StatusBadge from "../components/StatusBadge";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Modal from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
-import { userProfileData, STAFF_DEPARTMENTS } from "../data/staff";
+import { STAFF_DEPARTMENTS } from "../data/staff";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -34,16 +34,15 @@ const ProfilePage = () => {
   const [editForm, setEditForm] = useState({
     name: user?.displayName || user?.name || "",
     department: user?.department || "Administration",
-    phone: user?.phone || userProfileData.phone || "",
+    phone: user?.phone || "",
   });
 
   const profile = {
-    ...userProfileData,
-    name: user?.displayName || user?.name || userProfileData.name,
-    email: user?.email || userProfileData.email,
-    role: user?.role || userProfileData.role,
-    department: user?.department || userProfileData.department,
-    phone: user?.phone || userProfileData.phone,
+    name: user?.displayName || user?.name || "",
+    email: user?.email || "",
+    role: user?.role || "",
+    department: user?.department || "",
+    phone: user?.phone || "",
     gmailName: user?.gmailName || "",
     isCustomized: Boolean(user?.isCustomized),
   };

@@ -128,7 +128,8 @@ const AttendancePage = () => {
     setLoading(true);
     setError(null);
 
-    const periodNumber = parsePeriod(filters.period) || 1;
+    const isFullDay = filters.period?.toLowerCase()?.includes("full");
+    const periodNumber = isFullDay ? 1 : parsePeriod(filters.period) || 1;
     const yearNumber = parseYear(filters.year) || 1;
 
     try {
@@ -150,9 +151,10 @@ const AttendancePage = () => {
       // Check existing attendance records in backend
       const attRes = await attendanceService.getAttendance({
         date: filters.date,
-        period: periodNumber,
-        size: 100,
+        period: isFullDay ? undefined : periodNumber,
+        size: 200,
       });
+
 
       const records = attRes?.data || [];
       const studentIdSet = new Set(loadedStudents.map((s) => s.id));
@@ -278,7 +280,8 @@ const AttendancePage = () => {
 
   // Final bulk submission handler
   const handleConfirmSubmit = async () => {
-    const periodNumber = parsePeriod(filters.period) || 1;
+    const isFullDay = filters.period?.toLowerCase()?.includes("full");
+    const periodNumber = isFullDay ? null : parsePeriod(filters.period) || 1;
     const recordsPayload = classStudents.map((s) => {
       const st = attendanceMap[s.id] || "Present";
       let statusEnum = "PRESENT";
@@ -294,8 +297,10 @@ const AttendancePage = () => {
     const bulkPayload = {
       date: filters.date,
       period: periodNumber,
+      fullDay: isFullDay,
       records: recordsPayload,
     };
+
 
     setIsSubmitting(true);
     const now = new Date();
@@ -313,6 +318,17 @@ const AttendancePage = () => {
 
     try {
       await attendanceService.markAttendanceBulk(bulkPayload);
+
+      try {
+        sessionStorage.removeItem("ams_dashboard_cache_v1");
+        window.dispatchEvent(
+          new CustomEvent("ams_data_updated", {
+            detail: { action: "attendance_marked" },
+          })
+        );
+      } catch {
+        // ignore
+      }
 
       setIsSubmitted(true);
       setSubmissionMeta({

@@ -1,10 +1,12 @@
 export const ATTENDANCE_PERIODS = [
+  "Full Day",
   "Period 1",
   "Period 2",
   "Period 3",
   "Period 4",
   "Period 5",
 ];
+
 
 // Helper to get today's date formatted as YYYY-MM-DD
 export const getTodayDateString = () => {

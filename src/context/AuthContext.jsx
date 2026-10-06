@@ -49,14 +49,7 @@ export async function checkBackendHealth() {
   }
 }
 
-const INSTITUTIONAL_SEED_MAP = {
-  "admin@amsportal.edu": { role: "ADMIN", departmentId: "Administration", name: "Dr. Rajesh Sharma" },
-  "roevermca09@gmail.com": { role: "ADMIN", departmentId: "Administration", name: "Roever Administrator" },
-  "vp@amsportal.edu": { role: "VP", departmentId: "Administration", name: "Prof. K. Narayanan" },
-  "hod.cs@amsportal.edu": { role: "HOD", departmentId: "Computer Applications", name: "Dr. S. Venkatesh" },
-  "staff@amsportal.edu": { role: "STAFF", departmentId: "Computer Applications", name: "Mrs. Anitha R (MCA Faculty)" },
-  "student@amsportal.edu": { role: "STUDENT", departmentId: "Computer Applications", name: "Aravind Kumar (BCA)", studentId: "23CA001" },
-};
+const INSTITUTIONAL_SEED_MAP = {};
 
 function resolveFallbackUser(email, uid, displayName) {
   const norm = (email || "").toLowerCase().trim();
@@ -673,6 +666,7 @@ export const AuthProvider = ({ children }) => {
           body: JSON.stringify({
             name: finalName,
             email: user.email,
+            phone: newCustom.phone || user.phone || "",
             role: user.role,
             departmentId: finalDept,
             courseId: user.courseId || "",

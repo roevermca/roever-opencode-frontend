@@ -70,11 +70,27 @@ async function request(endpoint, options = {}) {
     });
   } catch (networkError) {
     clearTimeout(timeoutId);
-    throw new ApiError(
-      0,
-      `Cannot connect to backend server at ${API_BASE_URL}. Ensure Spring Boot is running.`,
-      networkError
-    );
+    if (url.includes("localhost:8080") || url.includes("127.0.0.1:8080")) {
+      const fallbackUrl = url.replace(/http:\/\/(localhost|127\.0\.0\.1):8080\/api/, "https://roever-opencode-backend-g3wy.onrender.com/api");
+      try {
+        response = await fetch(fallbackUrl, {
+          ...options,
+          headers,
+        });
+      } catch (fallbackError) {
+        throw new ApiError(
+          0,
+          `Cannot connect to backend server at ${API_BASE_URL}. Ensure Spring Boot is running.`,
+          networkError
+        );
+      }
+    } else {
+      throw new ApiError(
+        0,
+        `Cannot connect to backend server at ${API_BASE_URL}. Ensure Spring Boot is running.`,
+        networkError
+      );
+    }
   } finally {
     clearTimeout(timeoutId);
   }

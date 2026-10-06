@@ -17,6 +17,8 @@ import {
   Sparkles,
   CheckCircle2,
   ChevronRight,
+  Database,
+  Trash2,
 } from "lucide-react";
 import StatCard from "../components/StatCard";
 import VisualBarChart from "../components/VisualBarChart";
@@ -25,32 +27,83 @@ import { useAuth } from "../context/AuthContext";
 import studentService from "../services/studentService";
 import staffService from "../services/staffService";
 import reportService from "../services/reportService";
+import systemService from "../services/systemService";
 import { formatPercentage } from "../utils/formatters";
 import { getTodayDateString } from "../data/attendance";
+
+
+const DASHBOARD_CACHE_KEY = "ams_dashboard_cache_v1";
+
+const getCachedDashboardData = () => {
+  try {
+    const raw = sessionStorage.getItem(DASHBOARD_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Valid if less than 15 minutes old
+      if (parsed && Date.now() - (parsed.timestamp || 0) < 15 * 60 * 1000) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
 
 const DashboardPage = () => {
   const { user } = useAuth();
   const [isPending, startTransition] = useTransition();
 
-  const [stats, setStats] = useState({
-    totalStudents: "0",
-    totalStaff: "0",
-    todayAttendance: "0%",
-    lowAttendance: "0",
-  });
+  const cached = React.useMemo(() => getCachedDashboardData(), []);
 
-  const [deptSummary, setDeptSummary] = useState([]);
-  const [statusPills, setStatusPills] = useState([]);
-  const [todayRatio, setTodayRatio] = useState({
-    total: 0,
-    present: 0,
-    absent: 0,
-    percentage: 0,
-  });
+  const [stats, setStats] = useState(
+    cached?.stats || {
+      totalStudents: "0",
+      totalStaff: "0",
+      todayAttendance: "0%",
+      lowAttendance: "0",
+    }
+  );
 
-  const [loading, setLoading] = useState(true);
+  const [deptSummary, setDeptSummary] = useState(cached?.deptSummary || []);
+  const [statusPills, setStatusPills] = useState(cached?.statusPills || []);
+  const [todayRatio, setTodayRatio] = useState(
+    cached?.todayRatio || {
+      total: 0,
+      present: 0,
+      absent: 0,
+      percentage: 0,
+    }
+  );
+
+  const [loading, setLoading] = useState(!cached);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deptSearch, setDeptSearch] = useState("");
+  const [storageStatus, setStorageStatus] = useState(null);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [cleanupMessage, setCleanupMessage] = useState(null);
+
+  const handleManualCleanup = async (dryRun = false) => {
+    const confirmMsg = dryRun
+      ? "Run cleanup dry-run to see how many old records are eligible for cleanup?"
+      : "Clean up attendance records older than 90 days? Historical semester percentages will be safely archived.";
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+    setIsCleaning(true);
+    setCleanupMessage(null);
+    try {
+      const res = await systemService.triggerCleanup({ dryRun });
+      setCleanupMessage(res.message);
+      const updated = await systemService.getStorageStatus();
+      setStorageStatus(updated);
+    } catch (err) {
+      setCleanupMessage(err?.message || "Failed to execute cleanup operation.");
+    } finally {
+      setIsCleaning(false);
+      setTimeout(() => setCleanupMessage(null), 7000);
+    }
+  };
 
   // Get current time greeting
   const getGreeting = () => {
@@ -77,6 +130,37 @@ const DashboardPage = () => {
 
     const today = getTodayDateString();
     try {
+      const deptPromise =
+        user?.role !== "STAFF" && user?.role !== "STUDENT"
+          ? reportService.getDepartmentReports({}).catch(() => null)
+          : user?.role === "STAFF"
+          ? Promise.all([
+              departmentService.getDepartments(true).catch(() => []),
+              studentService.getStudents({ size: 1000 }).catch(() => ({ data: [] })),
+            ])
+              .then(([departments, stuListRes]) => {
+                const students = Array.isArray(stuListRes?.data) ? stuListRes.data : [];
+                const depts = Array.isArray(departments) ? departments : [];
+                const counts = {};
+                students.forEach((s) => {
+                  const dId = s.departmentId || s.department;
+                  if (dId) {
+                    counts[dId] = (counts[dId] || 0) + 1;
+                  }
+                });
+                return depts.map((d) => ({
+                  departmentId: d.id,
+                  department: d.name,
+                  totalStudents: counts[d.id] || counts[d.code] || counts[d.name] || 0,
+                  present: 0,
+                  absent: 0,
+                  total: 0,
+                  attendanceRate: 0,
+                }));
+              })
+              .catch(() => null)
+          : Promise.resolve(null);
+
       const [stuRes, staffRes, todayReport, lowAttRes, deptRes] =
         await Promise.all([
           studentService.getStudents({ size: 1 }).catch(() => null),
@@ -91,65 +175,84 @@ const DashboardPage = () => {
           user?.role !== "STAFF" && user?.role !== "STUDENT"
             ? reportService.getLowAttendanceReports({}).catch(() => null)
             : Promise.resolve(null),
-          user?.role !== "STAFF" && user?.role !== "STUDENT"
-            ? reportService.getDepartmentReports({}).catch(() => null)
-            : Promise.resolve(null),
+          deptPromise,
         ]);
 
       startTransition(() => {
+        let updatedStats = { ...stats };
+        let updatedRatio = { ...todayRatio };
+        let updatedPills = [...statusPills];
+        let updatedDepts = [];
+
         if (stuRes && typeof stuRes.totalElements === "number") {
-          setStats((prev) => ({
-            ...prev,
-            totalStudents: stuRes.totalElements.toLocaleString(),
-          }));
+          updatedStats.totalStudents = stuRes.totalElements.toLocaleString();
         }
         if (staffRes && typeof staffRes.totalElements === "number") {
-          setStats((prev) => ({
-            ...prev,
-            totalStaff: staffRes.totalElements.toLocaleString(),
-          }));
+          updatedStats.totalStaff = staffRes.totalElements.toLocaleString();
         }
         if (todayReport && typeof todayReport.overallPercentage === "number") {
-          setStats((prev) => ({
-            ...prev,
-            todayAttendance: `${todayReport.overallPercentage}%`,
-          }));
+          updatedStats.todayAttendance = `${todayReport.overallPercentage}%`;
           const present = todayReport.presentRecords || 0;
           const absent = todayReport.absentRecords || 0;
           const total = todayReport.totalRecords || 0;
           const presentPct = total > 0 ? Math.round((present / total) * 100) : 0;
           const absentPct = total > 0 ? Math.round((absent / total) * 100) : 0;
-          setStatusPills([
+          updatedPills = [
             { label: "Present", count: present, percentage: presentPct, variant: "success" },
             { label: "Absent", count: absent, percentage: absentPct, variant: "danger" },
-          ]);
-          setTodayRatio({
+          ];
+          updatedRatio = {
             total,
             present,
             absent,
             percentage: todayReport.overallPercentage,
-          });
+          };
         }
         if (Array.isArray(lowAttRes)) {
-          setStats((prev) => ({
-            ...prev,
-            lowAttendance: lowAttRes.length.toString(),
+          updatedStats.lowAttendance = lowAttRes.length.toString();
+        }
+        if (Array.isArray(deptRes)) {
+          updatedDepts = deptRes.map((d) => ({
+            name: d.department || d.departmentName || d.departmentId,
+            label: d.department || d.departmentName || d.departmentId,
+            total: Number(d.totalStudents ?? d.total ?? 0),
+            present: Number(d.present ?? 0),
+            absent: Number(d.absent ?? 0),
+            attendanceRate: Number(d.attendanceRate ?? d.rate ?? 0),
+            value: Number(d.attendanceRate ?? d.rate ?? 0),
           }));
         }
-        if (Array.isArray(deptRes) && deptRes.length > 0) {
-          setDeptSummary(
-            deptRes.map((d) => ({
-              name: d.department || d.departmentName || d.departmentId,
-              label: d.department || d.departmentName || d.departmentId,
-              total: d.totalStudents || d.total,
-              present: d.present,
-              absent: d.absent,
-              attendanceRate: d.attendanceRate,
-              value: d.attendanceRate || 0,
-            }))
+
+        setStats(updatedStats);
+        setStatusPills(updatedPills);
+        setTodayRatio(updatedRatio);
+        setDeptSummary(updatedDepts);
+
+        try {
+          sessionStorage.setItem(
+            DASHBOARD_CACHE_KEY,
+            JSON.stringify({
+              stats: updatedStats,
+              statusPills: updatedPills,
+              todayRatio: updatedRatio,
+              deptSummary: updatedDepts,
+              timestamp: Date.now(),
+            })
           );
+        } catch {
+          // ignore
         }
       });
+
+      if (user?.role === "ADMIN" || user?.role === "VP") {
+        systemService
+          .getStorageStatus()
+          .then((res) => {
+            if (res) setStorageStatus(res);
+          })
+          .catch(() => null);
+      }
+
     } catch {
       // keep fallback
     } finally {
@@ -158,9 +261,22 @@ const DashboardPage = () => {
     }
   };
 
+
   useEffect(() => {
-    loadDashboardData();
+    // If cached data is present, revalidate silently in background; otherwise show spinner/skeletons
+    loadDashboardData(Boolean(cached));
+
+    const handleDataRefresh = () => {
+      loadDashboardData(false);
+    };
+    window.addEventListener("ams_data_updated", handleDataRefresh);
+    window.addEventListener("focus", handleDataRefresh);
+    return () => {
+      window.removeEventListener("ams_data_updated", handleDataRefresh);
+      window.removeEventListener("focus", handleDataRefresh);
+    };
   }, [user]);
+
 
   // Filtered department records for the table
   const filteredDepartments = deptSummary.filter((d) =>
@@ -270,20 +386,117 @@ const DashboardPage = () => {
             )}
 
             {user?.role === "STAFF" && (
-              <Link
-                to="/attendance"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-[0_2px_8px_rgba(37,99,235,0.25)] transition-all"
-              >
-                <CalendarCheck className="w-4 h-4" />
-                Mark Today's Attendance
-              </Link>
+              <>
+                <Link
+                  to="/students?action=new"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs sm:text-sm shadow-xs transition-all"
+                >
+                  <GraduationCap className="w-4 h-4 text-blue-600" />
+                  + Add Student
+                </Link>
+                <Link
+                  to="/attendance"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm shadow-[0_2px_8px_rgba(37,99,235,0.25)] transition-all"
+                >
+                  <CalendarCheck className="w-4 h-4" />
+                  Mark Today's Attendance
+                </Link>
+              </>
             )}
+
           </div>
         </div>
       </div>
 
+      {/* Storage Health & Auto-Cleanup Monitoring (ADMIN & VP only) */}
+
+      {(user?.role === "ADMIN" || user?.role === "VP") && storageStatus && (
+        <div className="bg-slate-900 text-white rounded-2xl shadow-sm border border-slate-800 p-4 sm:p-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-bold tracking-tight text-white">
+                  MongoDB Atlas Storage (512 MB Free Tier)
+                </h3>
+                <span
+                  className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                    storageStatus.percentageUsed >= 90
+                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                      : storageStatus.percentageUsed >= 80
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  }`}
+                >
+                  {storageStatus.percentageUsed >= 80 ? "Auto-Cleanup Active (>= 80%)" : "Healthy (< 80%)"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                Automatic FIFO cleanup triggers at 80%–90% capacity. Records older than 90 days are archived & purged. Student profiles & accounts are 100% protected.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleManualCleanup(true)}
+                disabled={isCleaning}
+                className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all disabled:opacity-50"
+                title="Check how many old records are eligible for cleanup without deleting anything"
+              >
+                Dry Run Check
+              </button>
+              <button
+                type="button"
+                onClick={() => handleManualCleanup(false)}
+                disabled={isCleaning}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-all disabled:opacity-50"
+                title="Archive and purge old attendance records older than 90 days"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {isCleaning ? "Processing..." : "Free Old Data"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
+              <span>
+                Used: <strong className="text-white">{storageStatus.usedMb} MB</strong> / {storageStatus.maxLimitMb} MB
+              </span>
+              <span>
+                <strong className={storageStatus.percentageUsed >= 80 ? "text-amber-400" : "text-emerald-400"}>
+                  {storageStatus.percentageUsed}%
+                </strong>{" "}
+                of Free Limit
+              </span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  storageStatus.percentageUsed >= 90
+                    ? "bg-rose-500"
+                    : storageStatus.percentageUsed >= 80
+                    ? "bg-amber-500"
+                    : "bg-emerald-500"
+                }`}
+                style={{ width: `${Math.min(storageStatus.percentageUsed, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {cleanupMessage && (
+            <div className="mt-3 p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-xs text-emerald-300 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{cleanupMessage}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 2. Four KPI Stat Cards (Direct Database Metrics) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+
         <StatCard
           title="Total Students"
           value={stats.totalStudents}

@@ -69,35 +69,7 @@ export const ROLE_PERMISSIONS = {
   ],
 };
 
-// Fallback role profiles mapped by email (used when backend is offline or initial bootstrap)
-export const DEFAULT_USER_ROLES = {
-  "admin@amsportal.edu": {
-    role: ROLES.ADMIN,
-    name: "Dr. Rajesh Sharma",
-    department: "Administration",
-  },
-  "vp@amsportal.edu": {
-    role: ROLES.VP,
-    name: "Prof. K. Narayanan",
-    department: "Academic Affairs",
-  },
-  "hod.cs@amsportal.edu": {
-    role: ROLES.HOD,
-    name: "Dr. S. Venkatesh",
-    department: "Computer Science",
-  },
-  "staff@amsportal.edu": {
-    role: ROLES.STAFF,
-    name: "Mrs. Anitha R",
-    department: "Computer Science",
-  },
-  "student@amsportal.edu": {
-    role: ROLES.STUDENT,
-    name: "Aravind Kumar",
-    rollNo: "23CS001",
-    department: "Computer Science",
-  },
-};
+export const DEFAULT_USER_ROLES = {};
 
 export const getRoleForEmail = (email) => {
   if (!email) return ROLES.STAFF;
@@ -105,10 +77,6 @@ export const getRoleForEmail = (email) => {
   if (DEFAULT_USER_ROLES[normalized]) {
     return DEFAULT_USER_ROLES[normalized].role;
   }
-  if (normalized.includes("admin")) return ROLES.ADMIN;
-  if (normalized.includes("vp")) return ROLES.VP;
-  if (normalized.includes("hod")) return ROLES.HOD;
-  if (normalized.includes("student")) return ROLES.STUDENT;
   return ROLES.STAFF;
 };
 

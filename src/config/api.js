@@ -1,3 +1,5 @@
+export const RENDER_BACKEND_URL = "https://roever-opencode-backend-g3wy.onrender.com/api";
+
 const isLocalhost =
   typeof window !== "undefined" &&
   (window.location.hostname === "localhost" ||
@@ -18,9 +20,7 @@ export const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL &&
   !import.meta.env.VITE_API_BASE_URL.includes("localhost")
     ? import.meta.env.VITE_API_BASE_URL
-    : isLocalhost
-    ? "http://localhost:8080/api"
-    : "https://roever-opencode-backend-g3wy.onrender.com/api");
+    : RENDER_BACKEND_URL);
 
 export const API_ENDPOINTS = {
   HEALTH: `${API_BASE_URL}/health`,

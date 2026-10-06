@@ -1004,7 +1004,7 @@ const StaffPage = () => {
               <input
                 type="email"
                 name="email"
-                placeholder="staff@amsportal.edu or Gmail"
+                placeholder="Enter email address or Gmail"
                 value={formData.email}
                 onChange={handleFormChange}
                 className={`w-full rounded-lg border px-3 py-2 text-sm text-slate-800 shadow-2xs focus:outline-hidden focus:ring-1 ${

@@ -44,15 +44,17 @@ const TopNavbar = ({ onDrawerToggle }) => {
           </div>
           <div className="hidden sm:flex flex-col text-left">
             <span className="text-sm font-bold text-slate-800 group-hover:text-blue-600 leading-tight transition-colors">
-              {user?.displayName || user?.name || "Admin User"}
+              {user?.displayName || user?.name || "User"}
             </span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-xs text-slate-600 font-medium leading-tight">
-                {user?.email || "roevermca09@gmail.com"}
+                {user?.email || ""}
               </span>
-              <span className="text-[10px] font-bold text-blue-700 uppercase px-1.5 py-0.2 rounded bg-blue-100/70 border border-blue-200">
-                {user?.role || "ADMIN"}
-              </span>
+              {user?.role && (
+                <span className="text-[10px] font-bold text-blue-700 uppercase px-1.5 py-0.2 rounded bg-blue-100/70 border border-blue-200">
+                  {user.role}
+                </span>
+              )}
             </div>
           </div>
         </Link>
