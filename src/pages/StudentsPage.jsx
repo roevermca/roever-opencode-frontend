@@ -34,6 +34,7 @@ import {
   STUDENT_STATUSES,
   DEPARTMENT_COURSES,
   getCoursesForDepartment,
+  isPgCourse,
 } from "../data/students";
 import { parseYear, formatYear } from "../utils/formatters";
 
@@ -310,6 +311,12 @@ const StudentsPage = () => {
     if (!formData.email.trim()) errors.email = "Email is required";
     if (!formData.departmentId) errors.departmentId = "Department is required";
     if (!formData.courseId) errors.courseId = "Degree / Course is required";
+    const yearNum = parseYear(formData.year) || 1;
+    if (formData.level === "PG" && yearNum > 2) {
+      errors.year = "PG program duration is 2 years (Year 1 or 2)";
+    } else if (formData.level === "UG" && yearNum > 3) {
+      errors.year = "UG program duration is 3 years (Year 1, 2, or 3)";
+    }
     return errors;
   };
 
@@ -322,16 +329,25 @@ const StudentsPage = () => {
         courseId: "", // Reset course when department changes
       }));
     } else if (name === "courseId") {
-      // Auto suggest PG/UG
-      const isPg =
-        value.startsWith("M.") ||
-        value === "MCA" ||
-        value === "MBA" ||
-        value === "MSW";
+      // Auto detect PG/UG from selected course
+      const isPg = isPgCourse(value);
+      const nextLevel = isPg ? "PG" : "UG";
+      const currentYearNum = parseYear(formData.year) || 1;
+      const nextYear = isPg && currentYearNum > 2 ? "1st Year" : (formatYear(currentYearNum) || "1st Year");
       setFormData((prev) => ({
         ...prev,
         courseId: value,
-        level: isPg ? "PG" : "UG",
+        level: nextLevel,
+        year: nextYear,
+      }));
+    } else if (name === "level") {
+      const isPg = value === "PG";
+      const currentYearNum = parseYear(formData.year) || 1;
+      const nextYear = isPg && currentYearNum > 2 ? "1st Year" : (formatYear(currentYearNum) || "1st Year");
+      setFormData((prev) => ({
+        ...prev,
+        level: value,
+        year: nextYear,
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -360,6 +376,13 @@ const StudentsPage = () => {
     }
     return getCoursesForDepartment(formData.departmentId);
   }, [formData.departmentId, departments, courses]);
+
+  // Dynamic years based on UG (3 years) vs PG (2 years)
+  const modalYearOptions = React.useMemo(() => {
+    return formData.level === "PG"
+      ? ["1st Year", "2nd Year"]
+      : ["1st Year", "2nd Year", "3rd Year"];
+  }, [formData.level]);
 
   // Cascading courses for search filter
   const courseFilterOptions = React.useMemo(() => {
@@ -734,6 +757,11 @@ const StudentsPage = () => {
             options: courseFilterOptions,
             onChange: (val) => {
               setCourseFilter(val);
+              if (val && isPgCourse(val)) {
+                if (yearFilter === "3" || yearFilter === 3) {
+                  setYearFilter("");
+                }
+              }
               setCurrentPage(1);
             },
             disabled: isStaff,
@@ -745,6 +773,9 @@ const StudentsPage = () => {
             options: STUDENT_LEVELS,
             onChange: (val) => {
               setLevelFilter(val);
+              if (val === "PG" && (yearFilter === "3" || yearFilter === 3)) {
+                setYearFilter("");
+              }
               setCurrentPage(1);
             },
           },
@@ -752,7 +783,7 @@ const StudentsPage = () => {
             key: "year",
             label: "All Years",
             value: yearFilter,
-            options: STUDENT_YEARS,
+            options: (levelFilter === "PG" || (courseFilter && isPgCourse(courseFilter))) ? [1, 2] : STUDENT_YEARS,
             onChange: (val) => {
               setYearFilter(val);
               setCurrentPage(1);
@@ -1003,20 +1034,23 @@ const StudentsPage = () => {
             {/* Academic Year */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Academic Year
+                Academic Year ({formData.level === "PG" ? "2 Years" : "3 Years"})
               </label>
               <select
                 name="year"
-                value={formData.year || "1st Year"}
+                value={formatYear(formData.year) || "1st Year"}
                 onChange={handleFormChange}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-2xs focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
-                {STUDENT_YEARS.map((yr) => (
+                {modalYearOptions.map((yr) => (
                   <option key={yr} value={yr}>
                     {yr}
                   </option>
                 ))}
               </select>
+              {formErrors.year && (
+                <p className="mt-1 text-xs text-rose-600">{formErrors.year}</p>
+              )}
             </div>
 
             {/* Section */}

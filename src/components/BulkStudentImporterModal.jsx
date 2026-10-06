@@ -11,7 +11,7 @@ import {
   FileText,
   RotateCcw,
 } from "lucide-react";
-import { STUDENT_DEPARTMENTS } from "../data/students";
+import { STUDENT_DEPARTMENTS, isPgCourse } from "../data/students";
 import { parseYear } from "../utils/formatters";
 import studentService from "../services/studentService";
 
@@ -211,15 +211,15 @@ const BulkStudentImporterModal = ({
       // Program Type / Level
       let programType = rawLevel ? rawLevel.toUpperCase() : "UG";
       if (!rawLevel) {
-        const isPg =
-          resolvedCourseName?.startsWith("M.") ||
-          resolvedCourseName === "MCA" ||
-          resolvedCourseName === "MBA" ||
-          resolvedCourseName === "MSW";
-        programType = isPg ? "PG" : "UG";
+        programType = isPgCourse(resolvedCourseName) ? "PG" : "UG";
       }
 
       const yearNum = parseYear(rawYear) || 1;
+      if (programType === "PG" && (yearNum < 1 || yearNum > 2)) {
+        errors.push(`Invalid Year (${yearNum}) for PG program: maximum is 2 years`);
+      } else if (programType === "UG" && (yearNum < 1 || yearNum > 3)) {
+        errors.push(`Invalid Year (${yearNum}) for UG program: maximum is 3 years`);
+      }
       const sectionStr = (rawSec || "A").trim().toUpperCase();
 
       rows.push({

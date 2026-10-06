@@ -5,7 +5,9 @@ import {
   STUDENT_YEARS,
   STUDENT_SECTIONS,
   getCoursesForDepartment,
+  isPgCourse,
 } from "../data/students";
+import { parseYear, formatYear } from "../utils/formatters";
 import { ATTENDANCE_PERIODS } from "../data/attendance";
 
 const AttendanceFilters = ({
@@ -45,14 +47,33 @@ const AttendanceFilters = ({
     return getCoursesForDepartment(filters.department);
   }, [filters.department, departments, courses]);
 
+  const effectiveCourse = isStaff ? staffCourse || filters.course : filters.course;
+  const isPg = isPgCourse(effectiveCourse);
+  const yearOptions = isPg
+    ? ["1st Year", "2nd Year"]
+    : ["1st Year", "2nd Year", "3rd Year"];
+
   const handleChange = (field, value) => {
     if (field === "department") {
       const newCourses = getCoursesForDepartment(value);
       const nextCourse = newCourses.length > 0 ? newCourses[0] : "";
+      const isNextPg = isPgCourse(nextCourse);
+      const currentYearNum = parseYear(filters.year) || 1;
+      const nextYear = isNextPg && currentYearNum > 2 ? "1st Year" : (filters.year || "1st Year");
       onFilterChange({
         ...filters,
         department: value,
         course: nextCourse,
+        year: nextYear,
+      });
+    } else if (field === "course") {
+      const isNextPg = isPgCourse(value);
+      const currentYearNum = parseYear(filters.year) || 1;
+      const nextYear = isNextPg && currentYearNum > 2 ? "1st Year" : (filters.year || "1st Year");
+      onFilterChange({
+        ...filters,
+        course: value,
+        year: nextYear,
       });
     } else {
       onFilterChange({ ...filters, [field]: value });
@@ -144,12 +165,12 @@ const AttendanceFilters = ({
               Academic Year <span className="text-red-500">*</span>
             </label>
             <select
-              value={filters.year || ""}
+              value={formatYear(filters.year) || filters.year || "1st Year"}
               disabled={disabled}
               onChange={(e) => handleChange("year", e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
             >
-              {STUDENT_YEARS.map((yr) => (
+              {yearOptions.map((yr) => (
                 <option key={yr} value={yr}>
                   {yr}
                 </option>
