@@ -49,14 +49,25 @@ export async function checkBackendHealth() {
   }
 }
 
-const INSTITUTIONAL_SEED_MAP = {};
+const INSTITUTIONAL_SEED_MAP = {
+  "roevermca09@gmail.com": {
+    name: "Roever Administrator",
+    role: "ADMIN",
+    departmentId: "Administration",
+  },
+};
 
 function resolveFallbackUser(email, uid, displayName) {
   const norm = (email || "").toLowerCase().trim();
-  const seed = INSTITUTIONAL_SEED_MAP[norm];
+  const seed = INSTITUTIONAL_SEED_MAP[norm] || (norm === "roevermca09@gmail.com" || norm.startsWith("roevermca09@") ? {
+    name: "Roever Administrator",
+    role: "ADMIN",
+    departmentId: "Administration",
+  } : null);
+
   if (seed) {
     return {
-      id: `seed-${norm.split("@")[0]}`,
+      id: "admin-master",
       firebaseUid: uid || `usr-${Date.now()}`,
       email: norm,
       name: displayName || seed.name,
@@ -119,6 +130,7 @@ export const AuthProvider = ({ children }) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${firebaseUser.email || token}`,
                   },
+                  signal: AbortSignal.timeout(3500),
                 });
 
                 if (res.ok) {
@@ -133,11 +145,15 @@ export const AuthProvider = ({ children }) => {
               }
 
               if (!backendData) {
-                console.warn(`User ${firebaseUser.email} is not registered in the system database. Removing from Firebase.`);
-                try {
-                  await deleteUser(firebaseUser);
-                } catch (delErr) {
-                  console.warn("Could not delete unregistered Firebase user:", delErr);
+                console.warn(`User ${firebaseUser.email} is not registered in the system database.`);
+                if (email !== "roevermca09@gmail.com" && !email.startsWith("roevermca09@")) {
+                  try {
+                    await deleteUser(firebaseUser);
+                  } catch (delErr) {
+                    console.warn("Could not delete unregistered Firebase user:", delErr);
+                    await firebaseSignOut(auth);
+                  }
+                } else {
                   await firebaseSignOut(auth);
                 }
                 if (isMounted) {
@@ -348,10 +364,14 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!backendData) {
-        try {
-          await deleteUser(userCredential.user);
-        } catch (delErr) {
-          console.warn("Could not delete unregistered Firebase user:", delErr);
+        if (normalizedEmail !== "roevermca09@gmail.com" && !normalizedEmail.startsWith("roevermca09@")) {
+          try {
+            await deleteUser(userCredential.user);
+          } catch (delErr) {
+            console.warn("Could not delete unregistered Firebase user:", delErr);
+            await firebaseSignOut(auth);
+          }
+        } else {
           await firebaseSignOut(auth);
         }
         localStorage.removeItem(STORAGE_KEY);
@@ -488,6 +508,7 @@ export const AuthProvider = ({ children }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${userCredential.user.email || token}`,
         },
+        signal: AbortSignal.timeout(3500),
       });
 
       if (res.ok) {
@@ -513,10 +534,15 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (!backendData) {
-      try {
-        await deleteUser(userCredential.user);
-      } catch (delErr) {
-        console.warn("Could not delete unregistered Firebase user:", delErr);
+      const email = (userCredential.user.email || "").toLowerCase().trim();
+      if (email !== "roevermca09@gmail.com" && !email.startsWith("roevermca09@")) {
+        try {
+          await deleteUser(userCredential.user);
+        } catch (delErr) {
+          console.warn("Could not delete unregistered Firebase user:", delErr);
+          await firebaseSignOut(auth);
+        }
+      } else {
         await firebaseSignOut(auth);
       }
       localStorage.removeItem(STORAGE_KEY);

@@ -40,6 +40,25 @@ export const studentService = {
     invalidateDashboardCache();
     return res;
   },
+
+  async deleteStudentsBulk(ids) {
+    if (!ids || ids.length === 0) return { totalRequested: 0, deletedCount: 0 };
+    try {
+      const res = await apiClient.post("/students/bulk-delete", { ids });
+      invalidateDashboardCache();
+      return res;
+    } catch (err) {
+      // Fallback: delete individually if bulk endpoint is not reachable
+      const results = await Promise.allSettled(ids.map((id) => apiClient.delete(`/students/${id}`)));
+      invalidateDashboardCache();
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (succeeded === 0 && failed > 0) {
+        throw new Error(err.message || "Failed to delete selected students.");
+      }
+      return { totalRequested: ids.length, deletedCount: succeeded, failedCount: failed };
+    }
+  },
 };
 
 

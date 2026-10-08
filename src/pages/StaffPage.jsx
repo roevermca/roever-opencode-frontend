@@ -165,7 +165,16 @@ const StaffPage = () => {
       const res = await staffService.getStaff(params);
       let list = [];
       if (res && Array.isArray(res.data)) {
-        list = [...res.data];
+        const seenEmails = new Set();
+        list = res.data.filter((item) => {
+          const normEmail = (item.email || "").toLowerCase().trim();
+          if (!normEmail) return true;
+          if (seenEmails.has(normEmail) && item.role === "ADMIN") {
+            return false;
+          }
+          seenEmails.add(normEmail);
+          return true;
+        });
       }
 
       // If current logged-in user is in list, pin at top for convenience

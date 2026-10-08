@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileSpreadsheet,
+  CheckSquare,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import SearchFilter from "../components/SearchFilter";
@@ -100,6 +101,11 @@ const StudentsPage = () => {
   const [detailsStudent, setDetailsStudent] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bulk selection & deletion state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   // Feedback notification
   const [notification, setNotification] = useState("");
@@ -233,6 +239,7 @@ const StudentsPage = () => {
     setLevelFilter("");
     setYearFilter("");
     setSectionFilter("");
+    setSelectedIds([]);
     setCurrentPage(1);
   };
 
@@ -487,6 +494,7 @@ const StudentsPage = () => {
     try {
       await studentService.deleteStudent(targetId);
       showNotification(`Student "${target.name}" deleted successfully.`);
+      setSelectedIds((prev) => prev.filter((id) => id !== targetId));
       try {
         sessionStorage.removeItem("ams_dashboard_cache_v1");
         window.dispatchEvent(
@@ -502,6 +510,52 @@ const StudentsPage = () => {
       showNotification(`Failed to delete student: ${err.message}`);
     } finally {
       setDeleteTarget(null);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const currentPageIds = students.map((s) => s.id || s._id).filter(Boolean);
+    const isAllSelected =
+      currentPageIds.length > 0 &&
+      currentPageIds.every((id) => selectedIds.includes(id));
+
+    if (isAllSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentPageIds])));
+    }
+  };
+
+  const handleSelectRow = (rowKey) => {
+    setSelectedIds((prev) =>
+      prev.includes(rowKey) ? prev.filter((id) => id !== rowKey) : [...prev, rowKey]
+    );
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedIds.length === 0) return;
+    setIsBulkDeleting(true);
+    try {
+      const res = await studentService.deleteStudentsBulk(selectedIds);
+      const count = res?.deletedCount ?? selectedIds.length;
+      showNotification(`${count} student${count === 1 ? "" : "s"} deleted successfully.`);
+      setSelectedIds([]);
+      setIsBulkDeleteOpen(false);
+      try {
+        sessionStorage.removeItem("ams_dashboard_cache_v1");
+        window.dispatchEvent(
+          new CustomEvent("ams_data_updated", {
+            detail: { action: "bulk_delete_students", count },
+          })
+        );
+      } catch {
+        // ignore
+      }
+      await fetchStudents();
+    } catch (err) {
+      showNotification(`Failed to delete students: ${err.message}`);
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -803,6 +857,35 @@ const StudentsPage = () => {
         onReset={handleResetFilters}
       />
 
+      {/* Bulk Action Bar */}
+      {canManage && selectedIds.length > 0 && (
+        <div className="mb-4 p-3.5 rounded-xl bg-blue-50/90 border border-blue-200 flex flex-wrap items-center justify-between gap-3 text-sm shadow-xs animate-in fade-in">
+          <div className="flex items-center gap-2.5 text-blue-950 font-medium">
+            <CheckSquare className="w-5 h-5 text-blue-600 shrink-0" />
+            <span>
+              <strong>{selectedIds.length}</strong> student{selectedIds.length > 1 ? "s" : ""} selected for batch operations
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-colors cursor-pointer"
+            >
+              Deselect All
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsBulkDeleteOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected ({selectedIds.length})
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Loading Spinner or Data Table */}
       {loading ? (
         <div className="bg-white rounded-xl shadow-xs border border-slate-200 py-12 text-center flex flex-col items-center justify-center gap-2">
@@ -816,6 +899,10 @@ const StudentsPage = () => {
           <DataTable
             columns={columns}
             data={students}
+            selectable={canManage}
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onSelectRow={handleSelectRow}
             emptyTitle="No students found"
             emptyMessage="No student records match the selected filters or search criteria."
             emptyAction={
@@ -842,7 +929,10 @@ const StudentsPage = () => {
                 <button
                   type="button"
                   disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  onClick={() => {
+                    setSelectedIds([]);
+                    setCurrentPage((p) => Math.max(p - 1, 1));
+                  }}
                   className="p-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -853,7 +943,10 @@ const StudentsPage = () => {
                 <button
                   type="button"
                   disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  onClick={() => {
+                    setSelectedIds([]);
+                    setCurrentPage((p) => Math.min(p + 1, totalPages));
+                  }}
                   className="p-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -1174,14 +1267,45 @@ const StudentsPage = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setDetailsStudent(null)}
-                className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
-              >
-                Close
-              </button>
+            <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+              {canManage ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = detailsStudent;
+                    setDetailsStudent(null);
+                    setDeleteTarget(target);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                  title="Delete Student"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <span>Delete Student</span>
+                </button>
+              ) : <div />}
+              <div className="flex items-center gap-2">
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = detailsStudent;
+                      setDetailsStudent(null);
+                      handleOpenEdit(target);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4 text-blue-600" />
+                    <span>Edit</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setDetailsStudent(null)}
+                  className="px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1193,8 +1317,19 @@ const StudentsPage = () => {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
         title="Delete Student"
-        message={`Are you sure you want to delete student "${deleteTarget?.name}" (${deleteTarget?.rollNo})? This action cannot be undone.`}
+        message={`Are you sure you want to delete student "${deleteTarget?.name}" (${deleteTarget?.rollNo})? This will permanently remove their record, user account, and past attendance logs. This action cannot be undone.`}
         confirmText="Delete Student"
+        confirmVariant="danger"
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isBulkDeleteOpen}
+        onClose={() => !isBulkDeleting && setIsBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        title={`Delete ${selectedIds.length} Selected Student${selectedIds.length > 1 ? "s" : ""}`}
+        message={`Are you sure you want to permanently delete all ${selectedIds.length} selected students? This will permanently remove their records, user login accounts, and associated attendance history. This action cannot be undone.`}
+        confirmText={isBulkDeleting ? "Deleting Students..." : `Delete ${selectedIds.length} Students`}
         confirmVariant="danger"
       />
 
